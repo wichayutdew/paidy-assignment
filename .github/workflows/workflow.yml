@@ -25,5 +25,13 @@ jobs:
       - name: Test
         run: |
           cd forex-mtl
-          sbt test
+          sbt coverage test
+      - name: Coverage Report
+        run: |
+          cd forex-mtl
+          sbt coverageReport
+      - name: Upload coverage reports to Codecov
+        uses: codecov/codecov-action@v5
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
 

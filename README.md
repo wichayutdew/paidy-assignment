@@ -1,4 +1,5 @@
 [![Conventional Commits](https://img.shields.io/badge/Conventional%20Commits-1.0.0-%23FE5196?logo=conventionalcommits&logoColor=white)](https://conventionalcommits.org)
+[![codecov](https://codecov.io/github/wichayutdew/paidy-assignment/graph/badge.svg?token=JF4LSGB9B6)](https://codecov.io/github/wichayutdew/paidy-assignment)
 
 # Dew's version of the `README.md` file
 > This is a modified version of the original [README.md](OLD_README.md) file.
