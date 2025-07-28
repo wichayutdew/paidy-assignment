@@ -14,12 +14,24 @@ jobs:
         uses: sbt/setup-sbt@v1
         with:
           sbt-runner-version: 1.8.0
-      - name: Build
+      - name: Format Check
+        run: |
+          cd forex-mtl
+          sbt clean compile
+      - name: Compile
         run: |
           cd forex-mtl
           sbt clean compile
       - name: Test
         run: |
           cd forex-mtl
-          sbt test
+          sbt coverage test
+      - name: Coverage Report
+        run: |
+          cd forex-mtl
+          sbt coverageReport
+      - name: Upload coverage reports to Codecov
+        uses: codecov/codecov-action@v5
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
 
