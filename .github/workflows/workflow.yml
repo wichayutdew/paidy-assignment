@@ -1,0 +1,25 @@
+name: DEFAULT PIPELINE
+on: [ push ]
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set JDK17
+        uses: actions/setup-java@v4
+        with:
+          distribution: zulu
+          java-version: 17
+      - name: Set up SBT
+        uses: sbt/setup-sbt@v1
+        with:
+          sbt-runner-version: 1.8.0
+      - name: Build
+        run: |
+          cd forex-mtl
+          sbt clean compile
+      - name: Test
+        run: |
+          cd forex-mtl
+          sbt test
+
