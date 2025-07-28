@@ -14,7 +14,11 @@ jobs:
         uses: sbt/setup-sbt@v1
         with:
           sbt-runner-version: 1.8.0
-      - name: Build
+      - name: Format Check
+        run: |
+          cd forex-mtl
+          sbt clean compile
+      - name: Compile
         run: |
           cd forex-mtl
           sbt clean compile
