@@ -12,6 +12,8 @@ sbt clean ## Clean up all the generated files to prevent unexpected behavior
 
 sbt compile ## Compile the project
 
+sbt run ## Starts the application
+
 sbt scalafmt ## format the codebase per .scalafmt.conf
 
 sbt test ## Run all tests
