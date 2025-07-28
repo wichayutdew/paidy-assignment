@@ -20,7 +20,11 @@ class Module[F[_]: Concurrent: Timer](config: ApplicationConfig) {
   type PartialMiddleware = HttpRoutes[F] => HttpRoutes[F]
   type TotalMiddleware   = HttpApp[F] => HttpApp[F]
 
-  private val routesMiddleware: PartialMiddleware = (http: HttpRoutes[F]) => AutoSlash(http)
+  private val routesMiddleware: PartialMiddleware = {
+    { http: HttpRoutes[F] =>
+      AutoSlash(http)
+    }
+  }
 
   private val appMiddleware: TotalMiddleware = { http: HttpApp[F] =>
     Timeout(config.http.timeout)(http)
