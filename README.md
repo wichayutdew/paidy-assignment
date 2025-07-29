@@ -32,6 +32,8 @@ The codebase will follow [conventional commit](https://www.conventionalcommits.o
 > Set up the test framework to ensure the code is covered by tests
 ## Connect to One Frame API
 > Implement the live interpreter to connect to the One Frame API to satisfy the functional requirements of getting the exchange rate
+## Move secret to Vault
+> https://developer.hashicorp.com/vault/docs/get-started/developer-qs
 ## Build Redis External Cache
 > Implement the Redis external cache to extends to satisfy non-functional requirements of 10,000 successful requests per day
 ## Build Integration Tests
