@@ -15,16 +15,32 @@ The codebase will follow [conventional commit](https://www.conventionalcommits.o
   >   - test: (adding missing tests, refactoring tests; no production code change)
   >   - chore: (updating grunt tasks e.g. update CI/CD, Docker runner, etc; no production code change)
 
-# Project Setup 
-First step to make sure the project runs smoothly/with quality standard set. And extensible to all other developers.
-
-## Development Environment
-- Create local development and guide so that other developers can run the project locally
-> I will skip the deployment since we would not be able to deploy the project without cloud access
-
-## CI/CD
-- create Github Action's workflow to maintain code quality including:
-  - sbt clean compile -- To compile and do format check
-  - sbt test -- To run all tests
-  - [Optional] Add code coverage report with CodeCov intregration
-  - [Optional] Add integration test to test connection with other services e.g. database, external API, etc.
+# Tasks Breakdown
+## [Project Setup](https://github.com/wichayutdew/paidy-assignment/pull/1)
+> Trying to understand the project and set up the local environment
+- build fresh README.md
+- Setup developer environment on both Terminal and IDE
+- Familiarize with the sbt commands
+## [CI/CD](https://github.com/wichayutdew/paidy-assignment/pull/2)
+> Set up the CI/CD pipeline to ensure code quality and have a structured pull request template
+- Create GitHun Actions to include build and test
+## [Code Quality](https://github.com/wichayutdew/paidy-assignment/pull/3)
+> Ensure code is covered by tests and follows the code quality standards
+- Add code coverage tool `scoverage` and include it in the CI/CD pipeline with CodeCov
+- since `scoverage` transitive dependency is crashing with `scalafmt-coursier`, I decided to use normal `scalafmt` instead
+## Initiate test framework with Scalatest
+> Set up the test framework to ensure the code is covered by tests
+## Connect to One Frame API
+> Implement the live interpreter to connect to the One Frame API to satisfy the functional requirements of getting the exchange rate
+## Move secret to Vault
+> https://developer.hashicorp.com/vault/docs/get-started/developer-qs
+## Build Redis External Cache
+> Implement the Redis external cache to extends to satisfy non-functional requirements of 10,000 successful requests per day
+## Build Integration Tests
+> To ensure the service connects to the One Frame API and Redis external cache correctly
+##  Send a server metric to Prometheus
+> To have a monitoring system to monitor the service's non-functional requirements
+## Build E2E Load Tests
+> To ensure the service can handle 10,000 successful requests per day
+## [Optional] Code Refactoring/Cleanup
+> In case there is any code that can be improved or cleaned up
