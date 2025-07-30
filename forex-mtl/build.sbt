@@ -69,3 +69,8 @@ libraryDependencies ++= Seq(
   Libraries.catsScalaCheck   % Test,
   Libraries.mockitoScalaTest % Test
 )
+
+ThisBuild / coverageExcludedFiles := Seq(
+  ".*packages.*",
+  ".*interpreter.*"
+).mkString(";")
