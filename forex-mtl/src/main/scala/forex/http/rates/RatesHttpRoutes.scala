@@ -48,7 +48,6 @@ class RatesHttpRoutes[F[_]: Sync](rates: RatesProgram[F]) extends Http4sDsl[F] {
   private def toHttpError(error: BaseError): F[Response[F]] =
     error match {
       case ProgramError.RateLookupFailed(pair) => NotFound(s"Exchange rate not found for $pair")
-      case error                               => InternalServerError(s"Unknown error: $error")
     }
 
   val routes: HttpRoutes[F] = Router(
