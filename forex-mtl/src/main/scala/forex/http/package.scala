@@ -7,6 +7,7 @@ import io.circe.{ Decoder, Encoder }
 import org.http4s.{ EntityDecoder, EntityEncoder }
 import org.http4s.circe._
 
+//$COVERAGE-OFF$
 package object http {
 
   implicit def valueClassEncoder[A: UnwrappedEncoder]: Encoder[A] = implicitly
@@ -19,3 +20,4 @@ package object http {
   implicit def jsonEncoder[A <: Product: Encoder, F[_]]: EntityEncoder[F, A]       = jsonEncoderOf[F, A]
 
 }
+//$COVERAGE-ON$
