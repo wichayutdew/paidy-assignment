@@ -4,8 +4,9 @@ import forex.domain.Currency.{ EUR, USD }
 import forex.domain.{ Price, Rate, Timestamp }
 import forex.programs.RatesProgram
 import forex.programs.rates.Protocol
+import forex.programs.rates.errors.{ Error => ProgramError }
 import org.http4s.Method.GET
-import org.http4s.Status.{ BadRequest, Ok }
+import org.http4s.Status.{ BadRequest, NotFound, Ok }
 import org.http4s.implicits.http4sLiteralsSyntax
 import org.http4s.{ Request, Response }
 import org.mockito.scalatest.MockitoSugar
@@ -52,6 +53,23 @@ class RatesHttpRoutesSpec extends AnyWordSpec with Matchers with MockitoSugar wi
           val bodyIO: IO[String] = response.as[String]
           whenReady(bodyIO.unsafeToFuture()) { body =>
             body shouldBe "Invalid `from` parameter: Empty currency: Currency parameter should not be empty"
+          }
+        }
+      }
+
+      "return 404:NotFound with program returns error" in new Fixture {
+        when(ratesProgramMock.get(any[Protocol.GetRatesRequest])).thenReturn(
+          IO(Left(ProgramError.RateLookupFailed("USD to EUR")))
+        )
+
+        val request: Request[IO]         = Request[IO](GET, uri"/rates?from=USD&to=EUR")
+        val responseIO: IO[Response[IO]] = routes.orNotFound.run(request)
+
+        whenReady(responseIO.unsafeToFuture()) { response =>
+          response.status shouldBe NotFound
+          val bodyIO: IO[String] = response.as[String]
+          whenReady(bodyIO.unsafeToFuture()) { body =>
+            body shouldBe "Exchange rate not found for USD to EUR"
           }
         }
       }
