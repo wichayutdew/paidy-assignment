@@ -1,10 +1,13 @@
 package forex.domain
 
 import cats.Show
+import enumeratum.{ Enum, EnumEntry }
+import forex.domain.core.BaseError
 
-sealed trait Currency
+sealed trait Currency extends EnumEntry
+object Currency extends Enum[Currency] {
+  val values: IndexedSeq[Currency] = findValues
 
-object Currency {
   case object AUD extends Currency
   case object CAD extends Currency
   case object CHF extends Currency
@@ -15,28 +18,18 @@ object Currency {
   case object SGD extends Currency
   case object USD extends Currency
 
-  implicit val show: Show[Currency] = Show.show {
-    case AUD => "AUD"
-    case CAD => "CAD"
-    case CHF => "CHF"
-    case EUR => "EUR"
-    case GBP => "GBP"
-    case NZD => "NZD"
-    case JPY => "JPY"
-    case SGD => "SGD"
-    case USD => "USD"
-  }
+  val supportedCurrencies: List[String] = values.map(_.entryName).toList
 
-  def fromString(s: String): Currency = s.toUpperCase match {
-    case "AUD" => AUD
-    case "CAD" => CAD
-    case "CHF" => CHF
-    case "EUR" => EUR
-    case "GBP" => GBP
-    case "NZD" => NZD
-    case "JPY" => JPY
-    case "SGD" => SGD
-    case "USD" => USD
-  }
+  implicit val show: Show[Currency] = Show.show(_.entryName)
 
+  def fromString(s: String): Either[CurrencyError, Currency] = s.toUpperCase match {
+    case str if str.isBlank => Left(CurrencyError.Empty)
+    case str                => withNameOption(str).map(Right(_)).getOrElse(Left(CurrencyError.Unsupported(str)))
+  }
+}
+
+sealed trait CurrencyError extends BaseError
+object CurrencyError {
+  case object Empty extends CurrencyError
+  case class Unsupported(currency: String) extends CurrencyError
 }

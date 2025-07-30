@@ -28,8 +28,15 @@ The codebase will follow [conventional commit](https://www.conventionalcommits.o
 > Ensure code is covered by tests and follows the code quality standards
 - Add code coverage tool `scoverage` and include it in the CI/CD pipeline with CodeCov
 - since `scoverage` transitive dependency is crashing with `scalafmt-coursier`, I decided to use normal `scalafmt` instead
-## Initiate test framework with Scalatest
-> Set up the test framework to ensure the code is covered by tests
+## [Handle Errors](https://github.com/wichayutdew/paidy-assignment/pull/5)
+> As checked in the original code, the service does not handle errors properly. This is to ensure the API do throws appropriate/actionable errors to users when not working as expected
+- Implement request parameters validation
+  - *Assumption here is the Currency in [Currency.scala](forex-mtl/src/main/scala/forex/domain/Currency.scala) Class consists all the valid currencies and nothing more.
+- Implement appropriate error handler returns from service level
+  - As OneFrame API is still Dummy, the error is not being thrown in service yet.
+## [Initiate test framework with Scalatest](https://github.com/wichayutdew/paidy-assignment/pull/5)
+> Set up the test framework to ensure the code is covered by tests and add test case to covers existing code
+- the test framework is set up with `scalatest` and `mockito-scalatest`
 ## Connect to One Frame API
 > Implement the live interpreter to connect to the One Frame API to satisfy the functional requirements of getting the exchange rate
 ## Move secret to Vault
