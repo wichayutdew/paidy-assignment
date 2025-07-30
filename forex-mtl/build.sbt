@@ -71,6 +71,6 @@ libraryDependencies ++= Seq(
 )
 
 ThisBuild / coverageExcludedFiles := Seq(
-  ".*packages.*",
-  ".*interpreter.*"
-).mkString(";")
+  ".*Main.*",
+  ".*Module.*"
+).mkString("|")
