@@ -5,8 +5,9 @@ import cats.data.Validated.Valid
 import cats.data.ValidatedNel
 import cats.effect.Sync
 import cats.syntax.flatMap._
-import forex.domain.Currency
 import forex.domain.core.BaseError
+import forex.domain.rates.Constant.{ PATH, QUERY_PARAMETER }
+import forex.domain.rates.Currency
 import forex.programs.RatesProgram
 import forex.programs.rates.errors.{ Error => ProgramError }
 import forex.programs.rates.{ Protocol => RatesProgramProtocol }
@@ -20,8 +21,6 @@ class RatesHttpRoutes[F[_]: Sync](rates: RatesProgram[F]) extends Http4sDsl[F] {
   import Protocol._
   import QueryParams._
 
-  private[http] val prefixPath = "/rates"
-
   private val httpRoutes: HttpRoutes[F] = HttpRoutes.of[F] {
     case GET -> Root :? FromQueryParam(fromValidated) +& ToQueryParam(toValidated) =>
       (fromValidated, toValidated) match {
@@ -32,7 +31,10 @@ class RatesHttpRoutes[F[_]: Sync](rates: RatesProgram[F]) extends Http4sDsl[F] {
           }
         case (fromValidated, toValidated) =>
           BadRequest(
-            List(buildErrorMessage("from", fromValidated), buildErrorMessage("to", toValidated)).flatten
+            List(
+              buildErrorMessage(QUERY_PARAMETER.FROM, fromValidated),
+              buildErrorMessage(QUERY_PARAMETER.TO, toValidated)
+            ).flatten
               .mkString(";\n")
           )
       }
@@ -47,11 +49,13 @@ class RatesHttpRoutes[F[_]: Sync](rates: RatesProgram[F]) extends Http4sDsl[F] {
 
   private def toHttpError(error: BaseError): F[Response[F]] =
     error match {
-      case ProgramError.RateLookupFailed(pair) => NotFound(s"Exchange rate not found for $pair")
+      case ProgramError.ExchangeRateNotFound(pair) => NotFound(s"Exchange rate $pair is not found")
+      case ProgramError.RateLookupFailed(error)    => BadGateway(error)
+      case ProgramError.DecodingFailure(error)     => UnprocessableEntity(error)
     }
 
   val routes: HttpRoutes[F] = Router(
-    prefixPath -> httpRoutes
+    PATH.RATES -> httpRoutes
   )
 
 }

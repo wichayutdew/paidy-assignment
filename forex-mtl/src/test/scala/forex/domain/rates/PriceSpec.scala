@@ -1,4 +1,5 @@
-package forex.domain
+package forex.domain.rates
+
 import org.scalatest.wordspec.AnyWordSpec
 
 class PriceSpec extends AnyWordSpec {

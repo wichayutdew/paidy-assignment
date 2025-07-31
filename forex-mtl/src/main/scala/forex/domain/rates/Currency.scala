@@ -1,8 +1,10 @@
-package forex.domain
+package forex.domain.rates
 
 import cats.Show
+import cats.implicits.toBifunctorOps
 import enumeratum.{ Enum, EnumEntry }
 import forex.domain.core.BaseError
+import io.circe.Decoder
 
 sealed trait Currency extends EnumEntry
 object Currency extends Enum[Currency] {
@@ -26,6 +28,13 @@ object Currency extends Enum[Currency] {
     case str if str.isBlank => Left(CurrencyError.Empty)
     case str                => withNameOption(str).map(Right(_)).getOrElse(Left(CurrencyError.Unsupported(str)))
   }
+
+  implicit val currencyDecoder: Decoder[Currency] = Decoder.decodeString.emap(str =>
+    fromString(str).leftMap {
+      case CurrencyError.Empty             => "Currency code is empty"
+      case CurrencyError.Unsupported(code) => s"Unsupported currency code: $code"
+    }
+  )
 }
 
 sealed trait CurrencyError extends BaseError

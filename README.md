@@ -37,12 +37,30 @@ The codebase will follow [conventional commit](https://www.conventionalcommits.o
 ## [Initiate test framework with Scalatest](https://github.com/wichayutdew/paidy-assignment/pull/5)
 > Set up the test framework to ensure the code is covered by tests and add test case to covers existing code
 - the test framework is set up with `scalatest` and `mockito-scalatest`
-## Connect to One Frame API
+## [Connect to One Frame API](https://github.com/wichayutdew/paidy-assignment/pull/8)
 > Implement the live interpreter to connect to the One Frame API to satisfy the functional requirements of getting the exchange rate
+### Assumptions
+1. The requirement doesn't specifically mention the need to hide Forex API endpoint under authentication logic
+   > So, I assume the responsibility of Forex service as an information conveyer to Paidy's internal service and leave the endpoint open. 
+   > Since the backend service will usually be hidden behind company's network. and public network will not be able to hit it unless we expose it.
+   > But if this is a real world I wouldn't assume and probably consult with the team/Product on the nature of the service and how would it being utilized.
+2. One Frame API response returns more fields than the service expects
+   > For me, personally, if the requirement is vague, I would assume that the service signature should remain the same. 
+   > If there's an extra requirement to expose more fields, it can be done in the future once the requirement is clear.
+3. HTTP client to use will be `http4s`
+   > Since we develop the http server in this service with http4s, by using client from same library, the code will be more consistent and easier to maintain.
+   > This prevents any other transitive dependency issues that may arise from using different HTTP client library.
+4. OneFrame Token will not be stored in the codebase
+   > To keep the codebase clean and secure, I will not store the OneFrame Token in the codebase. within the current changes and will be handled in the next task.
 ## Move secret to Vault
 > https://developer.hashicorp.com/vault/docs/get-started/developer-qs
 ## Build Redis External Cache
 > Implement the Redis external cache to extends to satisfy non-functional requirements of 10,000 successful requests per day
+### Assumptions
+1. One Frame API allows to fetch multiple exchange rates in a single request, So, I will boot a service by filling Redis cache with all possible pairs since it would only consume 1 request to One Frame API
+   > As from my observation from the API response, rates for pair opposite pair is not the same as the original pair
+   > For example, if I request `USD` to `JPY`, the rate is not the same as `JPY` to `USD`. So total from allowed 9 Currencies there will be 36*2 = 72 possible pairs.
+   > With this cache preparation, for first 5 minutes, after the service is booted, we will be able to save multiple requests to One Frame API.
 ## Build Integration Tests
 > To ensure the service connects to the One Frame API and Redis external cache correctly
 ##  Send a server metric to Prometheus
@@ -51,3 +69,6 @@ The codebase will follow [conventional commit](https://www.conventionalcommits.o
 > To ensure the service can handle 10,000 successful requests per day
 ## [Optional] Code Refactoring/Cleanup
 > In case there is any code that can be improved or cleaned up
+## Idea
+1. make generic HTTP client and Server Route
+2. convert Error to GenericServerError so we don't need to handle error transformation in every service

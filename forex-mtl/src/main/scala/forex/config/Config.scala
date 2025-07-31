@@ -1,8 +1,8 @@
 package forex.config
 
 import cats.effect.Sync
+import forex.config.models.ApplicationConfig
 import fs2.Stream
-
 import pureconfig.ConfigSource
 import pureconfig.generic.auto._
 

@@ -1,44 +1,29 @@
 package forex.config
 import cats.effect.IO
+import forex.helper.MockedObject
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 
 import java.io.File
 import java.nio.file.Files
-import scala.concurrent.duration.{ FiniteDuration, SECONDS }
 
-class ConfigSpec extends AnyWordSpec with Matchers {
+class ConfigSpec extends AnyWordSpec with Matchers with MockedObject {
   "Config" when {
     "stream" should {
       "successfully load a valid configuration" in {
-        val configFile = createTempConfigFile("""app {
-                                                |  http {
-                                                |    host = "localhost"
-                                                |    port = 8080
-                                                |    timeout = 40 seconds
-                                                |  }
-                                                |}""".stripMargin)
+        val configFile = createTempConfigFile(mockedConfig)
         System.setProperty("config.file", configFile.getAbsolutePath)
 
         val result = Config.stream[IO]("app").compile.toList.unsafeRunSync()
 
         result.size shouldBe 1
-        val config: ApplicationConfig = result.head
-        config.http.host shouldBe "localhost"
-        config.http.port shouldBe 8080
-        config.http.timeout shouldBe FiniteDuration(40, SECONDS)
+        result.head shouldBe mockedApplicationConfig
 
         configFile.delete()
       }
 
       "throw an exception for missing configuration" in {
-        val configFile = createTempConfigFile("""app {
-                                                |  http {
-                                                |    host = "localhost"
-                                                |    port = 8080
-                                                |    timeout = 40 seconds
-                                                |  }
-                                                |}""".stripMargin)
+        val configFile = createTempConfigFile("""app {}""".stripMargin)
         System.setProperty("config.file", configFile.getAbsolutePath)
 
         val exception = intercept[pureconfig.error.ConfigReaderException[_]] {
@@ -51,12 +36,20 @@ class ConfigSpec extends AnyWordSpec with Matchers {
       }
 
       "throw an exception for invalid configuration" in {
-        // Create a temp config file with invalid content (wrong types)
         val configFile = createTempConfigFile("""invalid {
-                                                |  http {
+                                                |  server {
                                                 |    host = 1234
                                                 |    port = "not-a-number"
-                                                |    timeout = 5555
+                                                |    request-timeout = 5555
+                                                |  }
+                                                |  client {
+                                                |    one-frame {
+                                                |      host = 1234
+                                                |      port = "not-a-number"
+                                                |      request-timeout = 312333
+                                                |      connection-timeout = asd
+                                                |      token = "test-token"
+                                                |    }
                                                 |  }
                                                 |}""".stripMargin)
 
