@@ -1,6 +1,7 @@
 package forex.config
 import cats.effect.IO
 import forex.config.models.ApplicationConfig
+import forex.helper.MockedObject
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 
@@ -8,26 +9,11 @@ import java.io.File
 import java.nio.file.Files
 import scala.concurrent.duration.{ FiniteDuration, SECONDS }
 
-class ConfigSpec extends AnyWordSpec with Matchers {
+class ConfigSpec extends AnyWordSpec with Matchers with MockedObject {
   "Config" when {
     "stream" should {
       "successfully load a valid configuration" in {
-        val configFile = createTempConfigFile("""app {
-                                                |  server {
-                                                |    host = "localhost"
-                                                |    port = 8080
-                                                |    request-timeout = 40 seconds
-                                                |  }
-                                                |  client {
-                                                |    one-frame {
-                                                |      host = "localhost"
-                                                |      port = 8090
-                                                |      request-timeout = 30 seconds
-                                                |      connection-timeout = 30 seconds
-                                                |      token = "test-token"
-                                                |    }
-                                                |  }
-                                                |}""".stripMargin)
+        val configFile = createTempConfigFile(mockedConfig)
         System.setProperty("config.file", configFile.getAbsolutePath)
 
         val result = Config.stream[IO]("app").compile.toList.unsafeRunSync()
