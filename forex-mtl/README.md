@@ -14,7 +14,13 @@ sbt compile ## Compile the project
 
 sbt run ## Starts the application
 
-sbt scalafmt ## format the codebase per .scalafmt.conf
+sbt scalafmtAll ## format the codebase per .scalafmt.conf
+
+sbt scalafmtCheckAll ## check the codebase format per .scalafmt.conf
 
 sbt test ## Run all tests
+
+sbt coverage test ## Run all tests with code coverage
+
+sbt coverageReport ## Generate the code coverage report
 ```
