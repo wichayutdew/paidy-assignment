@@ -9,7 +9,7 @@
 ## Running the project locally
 ```bash
 cd forex-mtl
-docker compose -f dependencies.yml up -d
+docker compose -f external-dependencies.yml up -d
 sbt run
 ```
 
