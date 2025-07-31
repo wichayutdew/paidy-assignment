@@ -36,7 +36,7 @@ class RatesHttpRoutesSpec extends AnyWordSpec with Matchers with MockitoSugar wi
         val responseIO: IO[Response[IO]] = routes.orNotFound.run(request)
 
         whenReady(responseIO.unsafeToFuture()) { response =>
-          response.status shouldBe Ok // For automatic derivation of Circe decoders
+          response.status shouldBe Ok
           val bodyIO: IO[String] = response.as[String]
           whenReady(bodyIO.unsafeToFuture()) { body =>
             body should startWith("""{"from":"USD","to":"EUR","price":1.2""")
