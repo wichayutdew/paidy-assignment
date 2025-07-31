@@ -4,3 +4,18 @@ services:
     restart: always
     ports:
       - "8080:8080"
+  vault:
+    image: hashicorp/vault
+    restart: always
+    ports:
+      - "8200:8200"
+    environment:
+      VAULT_ADDR: "http://127.0.0.1:8200"
+      VAULT_DEV_ROOT_TOKEN_ID: "root"
+      ONE_FRAME_TOKEN: ${ONE_FRAME_TOKEN}
+    healthcheck:
+      test: "vault login root"
+      interval: 1s
+    volumes:
+      - ./vault-entrypoint.sh:/vault-entrypoint.sh
+    entrypoint: [ "/vault-entrypoint.sh" ]
