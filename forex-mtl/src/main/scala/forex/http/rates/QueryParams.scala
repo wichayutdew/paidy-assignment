@@ -1,8 +1,9 @@
 package forex.http.rates
 
-import forex.domain.rates.{ Currency, CurrencyError }
+import forex.domain.rates.Constant.QUERY_PARAMETER
+import forex.domain.rates.{Currency, CurrencyError}
 import org.http4s.dsl.impl.ValidatingQueryParamDecoderMatcher
-import org.http4s.{ ParseFailure, QueryParamDecoder }
+import org.http4s.{ParseFailure, QueryParamDecoder}
 
 object QueryParams {
 
@@ -21,7 +22,7 @@ object QueryParams {
       }
     }
 
-  object FromQueryParam extends ValidatingQueryParamDecoderMatcher[Currency]("from")
-  object ToQueryParam extends ValidatingQueryParamDecoderMatcher[Currency]("to")
+  object FromQueryParam extends ValidatingQueryParamDecoderMatcher[Currency](QUERY_PARAMETER.FROM)
+  object ToQueryParam extends ValidatingQueryParamDecoderMatcher[Currency](QUERY_PARAMETER.TO)
 
 }

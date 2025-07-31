@@ -3,6 +3,7 @@ package forex.services.rates.interpreters
 import cats.effect.Sync
 import cats.implicits.{ catsSyntaxApplicativeError, toFlatMapOps, toFunctorOps }
 import forex.config.models.OneFrameConfig
+import forex.domain.oneframe.Constant.{ HEADER, PATH, QUERY_PARAMETER }
 import forex.domain.oneframe.RateDTO
 import forex.domain.rates.{ Pair, Rate }
 import forex.services.rates.Algebra
@@ -13,7 +14,7 @@ import org.http4s.Status.Ok
 import org.http4s._
 import org.http4s.circe.jsonOf
 import org.http4s.client.Client
-import org.typelevel.ci.CIStringSyntax
+import org.typelevel.ci.CIString
 
 class OneFrameService[F[_]: Sync](
     client: Client[F],
@@ -32,13 +33,11 @@ class OneFrameService[F[_]: Sync](
   }
 
   private def getRates(pairs: List[Pair]): F[Error Either List[RateDTO]] = {
-    val parameterIdentifier: String      = "pair"
-    val queryParams: Map[String, String] = pairs.map(pair => parameterIdentifier -> s"${pair.from}${pair.to}").toMap
-    val path: String                     = "rates"
+    val queryParams: Map[String, String] = pairs.map(pair => QUERY_PARAMETER.PAIR -> s"${pair.from}${pair.to}").toMap
     val request                          = Request[F](
       method = GET,
-      uri = baseUri / path withQueryParams queryParams,
-      headers = Headers(Header.Raw(ci"token", config.token))
+      uri = baseUri / PATH.RATES withQueryParams queryParams,
+      headers = Headers(Header.Raw(CIString(HEADER.TOKEN), config.token))
     )
 
     client.run(request).use { response =>

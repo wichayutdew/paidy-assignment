@@ -18,7 +18,7 @@ class Application[F[_]: ConcurrentEffect: Timer] {
 
   def stream(ec: ExecutionContext): Stream[F, Unit] =
     for {
-      config <- Config.stream("app")
+      config <- Config.stream("app") // REFERENCE FROM TOP LEVEL CONFIG NAME IN `application.conf`
       client <- Stream.resource(
                   BlazeClientBuilder[F](ec)
                     .withConnectTimeout(config.client.oneFrame.connectionTimeout)
