@@ -8,11 +8,14 @@ class errorsTest extends AnyWordSpec with Matchers {
   "errors" when {
     "toProgramError" should {
       "convert ServiceError correctly" in {
-        val ratesServiceError = RatesServiceError.OneFrameLookupFailed("test error")
+        val oneFrameError = RatesServiceError.OneFrameLookupFailed("Service Unavailable")
+        errors.toProgramError(oneFrameError) shouldBe ProgramError.RateLookupFailed("Service Unavailable")
 
-        val result = errors.toProgramError(ratesServiceError)
+        val exchangeRateNotFound = RatesServiceError.ExchangeRateNotFound("USD to EUR")
+        errors.toProgramError(exchangeRateNotFound) shouldBe ProgramError.ExchangeRateNotFound("USD to EUR")
 
-        result shouldBe ProgramError.RateLookupFailed("test error")
+        val decodingFailure = RatesServiceError.DecodingFailure("Unsupported currency code")
+        errors.toProgramError(decodingFailure) shouldBe ProgramError.DecodingFailure("Unsupported currency code")
       }
     }
   }

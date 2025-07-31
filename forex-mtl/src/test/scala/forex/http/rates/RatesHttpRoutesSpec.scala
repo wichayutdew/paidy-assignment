@@ -1,12 +1,11 @@
 package forex.http.rates
 import cats.effect.IO
-import forex.domain.Currency.{ EUR, USD }
-import forex.domain.{ Price, Rate, Timestamp }
+import forex.helper.MockedObject
 import forex.programs.RatesProgram
 import forex.programs.rates.Protocol
 import forex.programs.rates.errors.{ Error => ProgramError }
 import org.http4s.Method.GET
-import org.http4s.Status.{ BadRequest, NotFound, Ok }
+import org.http4s.Status.{ BadGateway, BadRequest, NotFound, Ok, UnprocessableEntity }
 import org.http4s.implicits.http4sLiteralsSyntax
 import org.http4s.{ Request, Response }
 import org.mockito.scalatest.MockitoSugar
@@ -16,30 +15,20 @@ import org.scalatest.wordspec.AnyWordSpec
 
 import scala.concurrent.ExecutionContext
 
-class RatesHttpRoutesSpec extends AnyWordSpec with Matchers with MockitoSugar with ScalaFutures {
+class RatesHttpRoutesSpec extends AnyWordSpec with Matchers with MockitoSugar with ScalaFutures with MockedObject {
   "RatesHttpRoutes" when {
     "GET /rates" should {
       "return 200:OK with valid currency pair" in new Fixture {
-        when(ratesProgramMock.get(any[Protocol.GetRatesRequest])).thenReturn(
-          IO(
-            Right(
-              Rate(
-                pair = Rate.Pair(USD, EUR),
-                price = Price(BigDecimal(1.2)),
-                timestamp = Timestamp.now
-              )
-            )
-          )
-        )
+        when(ratesProgramMock.get(any[Protocol.GetRatesRequest])).thenReturn(IO(Right(mockedRate)))
 
-        val request: Request[IO]         = Request[IO](GET, uri"/rates?from=USD&to=EUR")
+        val request: Request[IO]         = Request[IO](GET, uri"/rates?from=CHF&to=CAD")
         val responseIO: IO[Response[IO]] = routes.orNotFound.run(request)
 
         whenReady(responseIO.unsafeToFuture()) { response =>
           response.status shouldBe Ok
           val bodyIO: IO[String] = response.as[String]
           whenReady(bodyIO.unsafeToFuture()) { body =>
-            body should startWith("""{"from":"USD","to":"EUR","price":1.2""")
+            body shouldBe """{"from":"CHF","to":"CAD","price":1.2,"timestamp":"2099-12-31T23:59:59Z"}"""
           }
         }
       }
@@ -57,9 +46,9 @@ class RatesHttpRoutesSpec extends AnyWordSpec with Matchers with MockitoSugar wi
         }
       }
 
-      "return 404:NotFound with program returns error" in new Fixture {
+      "return 404:NotFound when program returns ExchangeRateNotFound error" in new Fixture {
         when(ratesProgramMock.get(any[Protocol.GetRatesRequest])).thenReturn(
-          IO(Left(ProgramError.RateLookupFailed("USD to EUR")))
+          IO(Left(ProgramError.ExchangeRateNotFound("USD to EUR")))
         )
 
         val request: Request[IO]         = Request[IO](GET, uri"/rates?from=USD&to=EUR")
@@ -69,7 +58,41 @@ class RatesHttpRoutesSpec extends AnyWordSpec with Matchers with MockitoSugar wi
           response.status shouldBe NotFound
           val bodyIO: IO[String] = response.as[String]
           whenReady(bodyIO.unsafeToFuture()) { body =>
-            body shouldBe "Exchange rate not found for USD to EUR"
+            body shouldBe "Exchange rate USD to EUR is not found"
+          }
+        }
+      }
+
+      "return 502:BadGateway when program returns RateLookupFailed error" in new Fixture {
+        when(ratesProgramMock.get(any[Protocol.GetRatesRequest])).thenReturn(
+          IO(Left(ProgramError.RateLookupFailed("Service unavailable")))
+        )
+
+        val request: Request[IO]         = Request[IO](GET, uri"/rates?from=USD&to=EUR")
+        val responseIO: IO[Response[IO]] = routes.orNotFound.run(request)
+
+        whenReady(responseIO.unsafeToFuture()) { response =>
+          response.status shouldBe BadGateway
+          val bodyIO: IO[String] = response.as[String]
+          whenReady(bodyIO.unsafeToFuture()) { body =>
+            body shouldBe "Service unavailable"
+          }
+        }
+      }
+
+      "return 422:UnprocessableEntity when program returns DecodingFailure error" in new Fixture {
+        when(ratesProgramMock.get(any[Protocol.GetRatesRequest])).thenReturn(
+          IO(Left(ProgramError.DecodingFailure("Failed to parse date: invalid-date")))
+        )
+
+        val request: Request[IO]         = Request[IO](GET, uri"/rates?from=USD&to=EUR")
+        val responseIO: IO[Response[IO]] = routes.orNotFound.run(request)
+
+        whenReady(responseIO.unsafeToFuture()) { response =>
+          response.status shouldBe UnprocessableEntity
+          val bodyIO: IO[String] = response.as[String]
+          whenReady(bodyIO.unsafeToFuture()) { body =>
+            body shouldBe "Failed to parse date: invalid-date"
           }
         }
       }

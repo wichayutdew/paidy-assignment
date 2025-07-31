@@ -7,9 +7,13 @@ object errors {
   sealed trait Error extends BaseError
   object Error {
     final case class RateLookupFailed(msg: String) extends Error
+    final case class ExchangeRateNotFound(msg: String) extends Error
+    final case class DecodingFailure(msg: String) extends Error
   }
 
   def toProgramError(error: RatesServiceError): Error = error match {
     case RatesServiceError.OneFrameLookupFailed(msg) => Error.RateLookupFailed(msg)
+    case RatesServiceError.ExchangeRateNotFound(msg) => Error.ExchangeRateNotFound(msg)
+    case RatesServiceError.DecodingFailure(msg)      => Error.DecodingFailure(msg)
   }
 }
