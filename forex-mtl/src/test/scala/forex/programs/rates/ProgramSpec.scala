@@ -1,6 +1,6 @@
 package forex.programs.rates
 import cats.Id
-import forex.domain.Rate
+import forex.domain.rates.Pair
 import forex.helper.MockedObject
 import forex.programs.rates.errors.Error.RateLookupFailed
 import forex.services.RatesService
@@ -13,21 +13,21 @@ class ProgramSpec extends AnyWordSpec with Matchers with MockitoSugar with Mocke
   "Program" when {
     "get" should {
       "return rate when service returns rate" in new Fixture {
-        when(ratesServiceMock.get(any[Rate.Pair])).thenReturn(Right(mockedRate))
+        when(ratesServiceMock.get(any[Pair])).thenReturn(Right(mockedRate))
 
         val result = program.get(Protocol.GetRatesRequest(mockedRate.pair.from, mockedRate.pair.to))
 
         result shouldBe Right(mockedRate)
-        verify(ratesServiceMock).get(any[Rate.Pair])
+        verify(ratesServiceMock).get(any[Pair])
       }
 
       "return error when service returns error" in new Fixture {
-        when(ratesServiceMock.get(any[Rate.Pair])).thenReturn(Left(OneFrameLookupFailed("failed")))
+        when(ratesServiceMock.get(any[Pair])).thenReturn(Left(OneFrameLookupFailed("failed")))
 
         val result = program.get(Protocol.GetRatesRequest(mockedRate.pair.from, mockedRate.pair.to))
 
         result shouldBe Left(RateLookupFailed("failed"))
-        verify(ratesServiceMock).get(any[Rate.Pair])
+        verify(ratesServiceMock).get(any[Pair])
       }
     }
 

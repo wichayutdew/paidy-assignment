@@ -1,7 +1,6 @@
 package forex.helper
-import forex.domain.Currency.{ CAD, CHF }
 import forex.domain.oneframe.RateDTO
-import forex.domain.{ Currency, Price, Rate, Timestamp }
+import forex.domain.rates._
 
 import java.time.{ OffsetDateTime, ZoneOffset }
 
@@ -36,7 +35,7 @@ trait MockedObject {
   )
 
   val mockedRate: Rate = Rate(
-    pair = Rate.Pair(CHF, CAD),
+    pair = Pair(Currency.CHF, Currency.CAD),
     price = Price(BigDecimal(1.2)),
     timestamp = mockedTimestamp
   )

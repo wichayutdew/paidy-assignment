@@ -1,4 +1,7 @@
-package forex.domain
+package forex.domain.rates
+
+import io.circe.DecodingFailure
+import io.circe.parser.decode
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 
@@ -19,6 +22,18 @@ class CurrencySpec extends AnyWordSpec with Matchers {
 
       "return an error for blank strings" in {
         Currency.fromString(" ") shouldBe Left(CurrencyError.Empty)
+      }
+    }
+
+    "decode" should {
+      "decode valid currency JSON strings" in {
+        decode[Currency]("\"USD\"") shouldBe Right(Currency.USD)
+        decode[Currency]("\"EUR\"") shouldBe Right(Currency.EUR)
+      }
+
+      "fail to decode invalid currency JSON strings" in {
+        decode[Currency]("\"XYZ\"") shouldBe Left(DecodingFailure("Unsupported currency code: XYZ", List()))
+        decode[Currency]("\"\"") shouldBe Left(DecodingFailure("Currency code is empty", List()))
       }
     }
   }

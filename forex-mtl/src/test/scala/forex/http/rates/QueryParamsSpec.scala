@@ -1,5 +1,5 @@
 package forex.http.rates
-import forex.domain.Currency
+import forex.domain.rates.Currency
 import org.http4s.QueryParameterValue
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec

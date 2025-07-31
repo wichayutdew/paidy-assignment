@@ -1,6 +1,6 @@
 package forex.http.rates
 
-import forex.domain.{ Currency, CurrencyError }
+import forex.domain.rates.{ Currency, CurrencyError }
 import org.http4s.dsl.impl.ValidatingQueryParamDecoderMatcher
 import org.http4s.{ ParseFailure, QueryParamDecoder }
 

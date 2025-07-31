@@ -1,9 +1,8 @@
 package forex.http
 package rates
 
-import forex.domain.Currency.show
-import forex.domain.Rate.Pair
-import forex.domain._
+import forex.domain.rates.Currency.show
+import forex.domain.rates._
 import io.circe._
 import io.circe.generic.extras.Configuration
 import io.circe.generic.extras.semiauto.deriveConfiguredEncoder
