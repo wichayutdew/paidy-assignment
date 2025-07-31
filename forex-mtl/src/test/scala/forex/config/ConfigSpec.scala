@@ -12,10 +12,17 @@ class ConfigSpec extends AnyWordSpec with Matchers {
     "stream" should {
       "successfully load a valid configuration" in {
         val configFile = createTempConfigFile("""app {
-                                                |  http {
+                                                |  server {
                                                 |    host = "localhost"
                                                 |    port = 8080
                                                 |    timeout = 40 seconds
+                                                |  }
+                                                |  client {
+                                                |    one-frame {
+                                                |      host = "localhost"
+                                                |      port = 8090
+                                                |      timeout = 30 seconds
+                                                |    }
                                                 |  }
                                                 |}""".stripMargin)
         System.setProperty("config.file", configFile.getAbsolutePath)
@@ -24,21 +31,19 @@ class ConfigSpec extends AnyWordSpec with Matchers {
 
         result.size shouldBe 1
         val config: ApplicationConfig = result.head
-        config.http.host shouldBe "localhost"
-        config.http.port shouldBe 8080
-        config.http.timeout shouldBe FiniteDuration(40, SECONDS)
+        config.server.host shouldBe "localhost"
+        config.server.port shouldBe 8080
+        config.server.timeout shouldBe FiniteDuration(40, SECONDS)
+
+        config.client.oneFrame.host shouldBe "localhost"
+        config.client.oneFrame.port shouldBe 8090
+        config.client.oneFrame.timeout shouldBe FiniteDuration(30, SECONDS)
 
         configFile.delete()
       }
 
       "throw an exception for missing configuration" in {
-        val configFile = createTempConfigFile("""app {
-                                                |  http {
-                                                |    host = "localhost"
-                                                |    port = 8080
-                                                |    timeout = 40 seconds
-                                                |  }
-                                                |}""".stripMargin)
+        val configFile = createTempConfigFile("""app {}""".stripMargin)
         System.setProperty("config.file", configFile.getAbsolutePath)
 
         val exception = intercept[pureconfig.error.ConfigReaderException[_]] {
@@ -53,10 +58,17 @@ class ConfigSpec extends AnyWordSpec with Matchers {
       "throw an exception for invalid configuration" in {
         // Create a temp config file with invalid content (wrong types)
         val configFile = createTempConfigFile("""invalid {
-                                                |  http {
+                                                |  server {
                                                 |    host = 1234
                                                 |    port = "not-a-number"
                                                 |    timeout = 5555
+                                                |  }
+                                                |  client {
+                                                |    one-frame {
+                                                |      host = 1234
+                                                |      port = "not-a-number"
+                                                |      timeout = 312333
+                                                |    }
                                                 |  }
                                                 |}""".stripMargin)
 
