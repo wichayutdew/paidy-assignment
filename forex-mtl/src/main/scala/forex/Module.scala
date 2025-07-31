@@ -1,7 +1,7 @@
 package forex
 
 import cats.effect.{ Concurrent, Timer }
-import forex.config.ApplicationConfig
+import forex.config.models.ApplicationConfig
 import forex.http.rates.RatesHttpRoutes
 import forex.services._
 import forex.programs._

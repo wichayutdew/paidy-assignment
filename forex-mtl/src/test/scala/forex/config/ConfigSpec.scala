@@ -1,5 +1,6 @@
 package forex.config
 import cats.effect.IO
+import forex.config.models.ApplicationConfig
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 
@@ -15,13 +16,15 @@ class ConfigSpec extends AnyWordSpec with Matchers {
                                                 |  server {
                                                 |    host = "localhost"
                                                 |    port = 8080
-                                                |    timeout = 40 seconds
+                                                |    request-timeout = 40 seconds
                                                 |  }
                                                 |  client {
                                                 |    one-frame {
                                                 |      host = "localhost"
                                                 |      port = 8090
-                                                |      timeout = 30 seconds
+                                                |      request-timeout = 30 seconds
+                                                |      connection-timeout = 30 seconds
+                                                |      token = "test-token"
                                                 |    }
                                                 |  }
                                                 |}""".stripMargin)
@@ -33,11 +36,13 @@ class ConfigSpec extends AnyWordSpec with Matchers {
         val config: ApplicationConfig = result.head
         config.server.host shouldBe "localhost"
         config.server.port shouldBe 8080
-        config.server.timeout shouldBe FiniteDuration(40, SECONDS)
+        config.server.requestTimeout shouldBe FiniteDuration(40, SECONDS)
 
         config.client.oneFrame.host shouldBe "localhost"
         config.client.oneFrame.port shouldBe 8090
-        config.client.oneFrame.timeout shouldBe FiniteDuration(30, SECONDS)
+        config.client.oneFrame.requestTimeout shouldBe FiniteDuration(30, SECONDS)
+        config.client.oneFrame.connectionTimeout shouldBe FiniteDuration(30, SECONDS)
+        config.client.oneFrame.token shouldBe "test-token"
 
         configFile.delete()
       }
@@ -56,18 +61,19 @@ class ConfigSpec extends AnyWordSpec with Matchers {
       }
 
       "throw an exception for invalid configuration" in {
-        // Create a temp config file with invalid content (wrong types)
         val configFile = createTempConfigFile("""invalid {
                                                 |  server {
                                                 |    host = 1234
                                                 |    port = "not-a-number"
-                                                |    timeout = 5555
+                                                |    request-timeout = 5555
                                                 |  }
                                                 |  client {
                                                 |    one-frame {
                                                 |      host = 1234
                                                 |      port = "not-a-number"
-                                                |      timeout = 312333
+                                                |      request-timeout = 312333
+                                                |      connection-timeout = asd
+                                                |      token = "test-token"
                                                 |    }
                                                 |  }
                                                 |}""".stripMargin)
