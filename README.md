@@ -15,6 +15,11 @@ The codebase will follow [conventional commit](https://www.conventionalcommits.o
   >   - test: (adding missing tests, refactoring tests; no production code change)
   >   - chore: (updating grunt tasks e.g. update CI/CD, Docker runner, etc; no production code change)
 
+# Overview
+1. As the requirement is vague, I'll list my assumptions in each task to clarify the scope of the task.
+2. Since I don't want to over-complicated the task, I will not try to deploy this code to any cloud provider but rather make sure local development and testing is as smooth as possible.
+   - Means, all the external dependencies will be deployed locally under single docker-compose file. All the steps to start the services will be documented in the `README.md` file. 
+
 # Tasks Breakdown
 ## [Project Setup](https://github.com/wichayutdew/paidy-assignment/pull/1)
 > Trying to understand the project and set up the local environment
@@ -52,8 +57,14 @@ The codebase will follow [conventional commit](https://www.conventionalcommits.o
    > This prevents any other transitive dependency issues that may arise from using different HTTP client library.
 4. OneFrame Token will not be stored in the codebase
    > To keep the codebase clean and secure, I will not store the OneFrame Token in the codebase. within the current changes and will be handled in the next task.
-## Move secret to Vault
-> https://developer.hashicorp.com/vault/docs/get-started/developer-qs
+## [Move secret to Vault](https://github.com/wichayutdew/paidy-assignment/pull/9)
+> Proper way to deals with secrets and keep codebase secure is to saved it to secret manager. 
+> 
+> But as we're not deploying this to any cloud provider, we don't get to use any services provided by cloud provider.
+> 
+> I will use local [HashiCorp Vault](https://www.vaultproject.io/) to store all the secrets instead.
+> 
+> And as Scala doesn't have stable native library to connect to Vault, I'll utilize one of the JVM languages perks "using Java library".
 ## Build Redis External Cache
 > Implement the Redis external cache to extends to satisfy non-functional requirements of 10,000 successful requests per day
 ### Assumptions
@@ -72,3 +83,4 @@ The codebase will follow [conventional commit](https://www.conventionalcommits.o
 ## Idea
 1. make generic HTTP client and Server Route
 2. convert Error to GenericServerError so we don't need to handle error transformation in every service
+3. Hide sensitive error message from user
