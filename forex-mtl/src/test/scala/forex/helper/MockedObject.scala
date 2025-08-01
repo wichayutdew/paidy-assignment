@@ -1,5 +1,5 @@
 package forex.helper
-import forex.config.models.{ ApplicationConfig, ClientSetting, OneFrameConfig, ServerSetting, VaultConfig }
+import forex.config.models._
 import forex.domain.oneframe.RateDTO
 import forex.domain.rates._
 
@@ -25,6 +25,12 @@ trait MockedObject {
                                                 |      host = "localhost"
                                                 |      port = 8200
                                                 |      request-timeout = 30 seconds
+                                                |      connection-timeout = 30 seconds
+                                                |      token = "test-token"
+                                                |    }
+                                                |    redis {
+                                                |      host = "localhost"
+                                                |      port = 6379
                                                 |      connection-timeout = 30 seconds
                                                 |      token = "test-token"
                                                 |    }
@@ -65,6 +71,12 @@ trait MockedObject {
         host = "localhost",
         port = 8200,
         requestTimeout = FiniteDuration(30, SECONDS),
+        connectionTimeout = FiniteDuration(30, SECONDS),
+        token = "test-token"
+      ),
+      redis = RedisConfig(
+        host = "localhost",
+        port = 6379,
         connectionTimeout = FiniteDuration(30, SECONDS),
         token = "test-token"
       )
