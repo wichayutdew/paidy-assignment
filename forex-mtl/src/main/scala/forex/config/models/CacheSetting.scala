@@ -2,7 +2,8 @@ package forex.config.models
 import scala.concurrent.duration.FiniteDuration
 
 final case class CacheSetting(
-    rates: CacheConfig
+    rates: CacheConfig,
+    token: CacheConfig
 )
 
 final case class CacheConfig(

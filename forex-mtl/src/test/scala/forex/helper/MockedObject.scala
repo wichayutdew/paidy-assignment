@@ -4,7 +4,7 @@ import forex.domain.oneframe.RateDTO
 import forex.domain.rates._
 
 import java.time.{ OffsetDateTime, ZoneOffset }
-import scala.concurrent.duration.{ FiniteDuration, MINUTES, SECONDS }
+import scala.concurrent.duration.{ FiniteDuration, HOURS, MINUTES, SECONDS }
 
 trait MockedObject {
 
@@ -40,6 +40,11 @@ trait MockedObject {
                                                 |      enabled = true
                                                 |      prefix = "rates"
                                                 |      ttl = 5 minutes
+                                                |    }
+                                                |    token {
+                                                |      enabled = true
+                                                |      prefix = "token"
+                                                |      ttl = 3 hours
                                                 |    }
                                                 |  }
                                                 |}""".stripMargin
@@ -89,12 +94,13 @@ trait MockedObject {
         token = "test-token"
       )
     ),
-    cache = CacheSetting(rates =
-      CacheConfig(
+    cache = CacheSetting(
+      rates = CacheConfig(
         enabled = true,
         prefix = "rates",
         ttl = FiniteDuration(5, MINUTES)
-      )
+      ),
+      token = CacheConfig(enabled = true, prefix = "token", ttl = FiniteDuration(3, HOURS))
     )
   )
 
