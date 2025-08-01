@@ -15,9 +15,6 @@ class errorsSpec extends AnyWordSpec with Matchers {
         val invalidTokenError = SecretManagerServiceError.SecretLookupFailed("secret not found")
         errors.toProgramError(invalidTokenError) shouldBe ProgramError.RateLookupFailed("secret not found")
 
-        val exchangeRateNotFound = RatesServiceError.ExchangeRateNotFound("USD to EUR")
-        errors.toProgramError(exchangeRateNotFound) shouldBe ProgramError.ExchangeRateNotFound("USD to EUR")
-
         val decodingFailure = RatesServiceError.DecodingFailure("Unsupported currency code")
         errors.toProgramError(decodingFailure) shouldBe ProgramError.DecodingFailure("Unsupported currency code")
       }

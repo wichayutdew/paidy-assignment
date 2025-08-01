@@ -15,7 +15,6 @@ object errors {
   def toProgramError(error: BaseError): Error = error match {
     case RatesServiceError.OneFrameLookupFailed(msg)       => Error.RateLookupFailed(msg)
     case SecretManagerServiceError.SecretLookupFailed(msg) => Error.RateLookupFailed(msg)
-    case RatesServiceError.ExchangeRateNotFound(msg)       => Error.ExchangeRateNotFound(msg)
     case RatesServiceError.DecodingFailure(msg)            => Error.DecodingFailure(msg)
   }
 }

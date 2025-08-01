@@ -7,7 +7,7 @@ import forex.domain.oneframe.Constant.{ HEADER, PATH, QUERY_PARAMETER }
 import forex.domain.oneframe.RateDTO
 import forex.domain.rates.{ Pair, Rate }
 import forex.services.rates.Algebra
-import forex.services.rates.errors.Error.{ DecodingFailure, ExchangeRateNotFound, OneFrameLookupFailed }
+import forex.services.rates.errors.Error.{ DecodingFailure, OneFrameLookupFailed }
 import forex.services.rates.errors._
 import org.http4s.Method.GET
 import org.http4s.Status.Ok
@@ -16,10 +16,7 @@ import org.http4s.circe.jsonOf
 import org.http4s.client.Client
 import org.typelevel.ci.CIString
 
-class OneFrameService[F[_]: Sync](
-    client: Client[F],
-    config: OneFrameConfig
-) extends Algebra[F] {
+class OneFrameService[F[_]: Sync](client: Client[F], config: OneFrameConfig) extends Algebra[F] {
   implicit val rateListEntityDecoder: EntityDecoder[F, List[RateDTO]] = jsonOf[F, List[RateDTO]]
 
   private val baseUri = Uri(
@@ -27,10 +24,9 @@ class OneFrameService[F[_]: Sync](
     Some(Uri.Authority(host = Uri.RegName(config.host), port = Some(config.port)))
   )
 
-  override def get(pair: Pair, token: String): F[Error Either Rate] = getRates(List(pair), token).flatMap {
-    case Right(rateDTOs) if rateDTOs.nonEmpty => Sync[F].pure(Right(Rate.fromOneFrameDTO(rateDTOs.head)))
-    case Right(_)                             => Sync[F].pure(Left(ExchangeRateNotFound(s"${pair.from} to ${pair.to}")))
-    case Left(error)                          => Sync[F].pure(Left(error))
+  override def get(pairs: List[Pair], token: String): F[Either[Error, List[Rate]]] = getRates(pairs, token).flatMap {
+    case Right(rateDTOs) => Sync[F].pure(Right(rateDTOs.map(Rate.fromOneFrameDTO)))
+    case Left(error)     => Sync[F].pure(Left(error))
   }
 
   private def getRates(pairs: List[Pair], token: String): F[Error Either List[RateDTO]] = {

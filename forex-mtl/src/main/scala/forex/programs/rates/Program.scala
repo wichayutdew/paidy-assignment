@@ -24,24 +24,41 @@ class Program[F[_]: Monad](
       val cacheKey = s"${ratesCacheConfig.prefix}_${exchangeRatePair.toCacheKey}"
       externalCacheService.get(cacheKey).flatMap {
         case Some(rateString) => fromJsonString(rateString)
-        case None             => fetchRate(exchangeRatePair, cacheKey, shouldFillCache = true)
+        case None             => findRate(exchangeRatePair, fetchRates(List(exchangeRatePair), shouldFillCache = true))
       }
-    } else fetchRate(exchangeRatePair, "", shouldFillCache = false)
+    } else
+      findRate(exchangeRatePair, fetchRates(List(exchangeRatePair), shouldFillCache = false))
   }
-
-  private def fetchRate(pair: Pair, cacheKey: String, shouldFillCache: Boolean): F[Error Either Rate] = (for {
-    token <- EitherT(secretManagerService.get(Path.ONE_FRAME, Key.TOKEN)).leftMap(toProgramError)
-    rate <- EitherT(ratesService.get(pair, token)).leftMap(toProgramError)
-  } yield {
-    if (shouldFillCache) externalCacheService.set(cacheKey, rate.asJson.noSpaces, ratesCacheConfig.ttl)
-    rate
-  }).value
 
   private def fromJsonString(rateString: String): F[Error Either Rate] =
     decode[Rate](rateString) match {
       case Right(rate) => Monad[F].pure(Right(rate))
       case Left(error) => Monad[F].pure(Left(DecodingFailure(error.getMessage)))
     }
+
+  private def findRate(pair: Pair, ratesF: F[Error Either List[Rate]]): F[Error Either Rate] =
+    ratesF.flatMap {
+      case Right(rates) =>
+        Monad[F].pure(
+          rates
+            .find(_.pair == pair)
+            .map(Right(_))
+            .getOrElse(Left(Error.ExchangeRateNotFound(s"${pair.from} to ${pair.to}")))
+        )
+      case Left(error) => Monad[F].pure(Left(error))
+    }
+
+  private def fetchRates(pair: List[Pair], shouldFillCache: Boolean): F[Error Either List[Rate]] = (for {
+    token <- EitherT(secretManagerService.get(Path.ONE_FRAME, Key.TOKEN)).leftMap(toProgramError)
+    rates <- EitherT(ratesService.get(pair, token)).leftMap(toProgramError)
+  } yield rates.map { rate =>
+    if (shouldFillCache) {
+      val cacheKey = s"${ratesCacheConfig.prefix}_${rate.pair.toCacheKey}"
+      externalCacheService.set(cacheKey, rate.asJson.noSpaces, ratesCacheConfig.ttl)
+    }
+    rate
+  }).value
+
 }
 
 object Program {
@@ -51,6 +68,6 @@ object Program {
       secretManagerService: SecretManagerService[F],
       externalCacheService: ExternalCacheService[F],
       ratesCacheConfig: CacheConfig
-  ): Algebra[F] = new Program[F](ratesService, secretManagerService, externalCacheService, ratesCacheConfig)
+  ): Program[F] = new Program[F](ratesService, secretManagerService, externalCacheService, ratesCacheConfig)
 
 }
