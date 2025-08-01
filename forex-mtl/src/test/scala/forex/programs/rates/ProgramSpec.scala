@@ -161,6 +161,19 @@ class ProgramSpec extends AnyWordSpec with Matchers with MockitoSugar with Mocke
         }
       }
     }
+
+    "preFetch" should {
+      "call fetchRates with all pairs and fill cache" in new Fixture {
+        when(secretManagerServiceMock.get(any[String], any[String])).thenReturn(IO.pure(Right("token")))
+        when(ratesServiceMock.get(any[List[Pair]], any[String])).thenReturn(IO.pure(Right(List(mockedRate))))
+
+        whenReady(program(enableCache = true).preFetch().unsafeToFuture()) { _ =>
+          verify(secretManagerServiceMock, times(1)).get(any[String], any[String])
+          verify(ratesServiceMock, times(1)).get(Currency.getAllPairs, "token")
+          verify(externalCacheServiceMock, times(1)).set(any[String], any[String], any[FiniteDuration])
+        }
+      }
+    }
   }
 
   trait Fixture {

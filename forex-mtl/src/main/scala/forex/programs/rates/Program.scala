@@ -2,9 +2,9 @@ package forex.programs.rates
 
 import cats.Monad
 import cats.data.EitherT
-import cats.implicits.toFlatMapOps
+import cats.implicits.{ toFlatMapOps, toFunctorOps }
 import forex.config.models.CacheConfig
-import forex.domain.rates.{ Pair, Rate }
+import forex.domain.rates.{ Currency, Pair, Rate }
 import forex.domain.vault.Constant.{ Key, Path }
 import forex.programs.rates.errors.Error.DecodingFailure
 import forex.programs.rates.errors._
@@ -18,6 +18,8 @@ class Program[F[_]: Monad](
     externalCacheService: ExternalCacheService[F],
     ratesCacheConfig: CacheConfig
 ) extends Algebra[F] {
+  override def preFetch(): F[Unit] = fetchRates(Currency.getAllPairs, shouldFillCache = true).void
+
   override def get(request: Protocol.GetRatesRequest): F[Error Either Rate] = {
     val exchangeRatePair = Pair(request.from, request.to)
     if (ratesCacheConfig.enabled) {
@@ -58,7 +60,6 @@ class Program[F[_]: Monad](
     }
     rate
   }).value
-
 }
 
 object Program {

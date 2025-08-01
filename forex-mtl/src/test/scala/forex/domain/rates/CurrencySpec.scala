@@ -25,6 +25,14 @@ class CurrencySpec extends AnyWordSpec with Matchers {
       }
     }
 
+    "getAllPairs" should {
+      "return all pairs of currencies excluding self-pairs" in {
+        val pairs = Currency.getAllPairs
+        pairs.size shouldBe (Currency.values.size * (Currency.values.size - 1))
+        pairs.forall(pair => pair.from != pair.to) shouldBe true
+      }
+    }
+
     "decode" should {
       "decode valid currency JSON strings" in {
         decode[Currency]("\"USD\"") shouldBe Right(Currency.USD)

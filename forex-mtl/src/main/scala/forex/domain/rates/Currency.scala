@@ -29,6 +29,12 @@ object Currency extends Enum[Currency] {
     case str                => withNameOption(str).map(Right(_)).getOrElse(Left(CurrencyError.Unsupported(str)))
   }
 
+  def getAllPairs: List[Pair] = (for {
+    from <- values
+    to <- values
+    if from != to
+  } yield Pair(from, to)).toList
+
   implicit val currencyEncoder: Encoder[Currency] = Encoder.encodeString.contramap[Currency](_.entryName)
   implicit val currencyDecoder: Decoder[Currency] = Decoder.decodeString.emap(str =>
     fromString(str).leftMap {

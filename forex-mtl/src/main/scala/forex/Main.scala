@@ -30,6 +30,7 @@ class Application[F[_]: ConcurrentEffect: Timer] {
              .bindHttp(config.server.port, config.server.host)
              .withHttpApp(module.httpApp)
              .serve
+      _ <- Stream.eval(module.ratesProgram.preFetch()) // Prefetch rates at startup
     } yield ()
 
 }

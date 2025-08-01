@@ -52,7 +52,7 @@ class Module[F[_]: Concurrent: Timer](
   )
 
   /* ------------------------------ PROGRAMS ------------------------------ */
-  private val ratesProgram: RatesProgram[F] =
+  val ratesProgram: RatesProgram[F] =
     RatesProgram[F](ratesService, secretManagerService, externalCacheService, config.cache.rates)
 
   /* ------------------------------ SERVER ------------------------------ */
