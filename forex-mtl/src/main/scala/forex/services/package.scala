@@ -7,5 +7,8 @@ package object services {
 
   type SecretManagerService[F[_]] = secretManager.Algebra[F]
   final val SecretManagerServices = secretManager.Interpreters
+
+  type ExternalCacheService[F[_]] = externalCache.Algebra[F]
+  final val ExternalCacheServices = externalCache.Interpreters
 }
 //$COVERAGE-ON$

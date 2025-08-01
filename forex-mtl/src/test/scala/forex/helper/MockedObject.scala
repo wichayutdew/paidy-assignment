@@ -44,6 +44,7 @@ trait MockedObject {
                                                 |  }
                                                 |}""".stripMargin
 
+  val mockedTimestampObject      = """{"value":"2099-12-31T23:59:59Z"}"""
   val mockedTimestamp: Timestamp = Timestamp(OffsetDateTime.of(2099, 12, 31, 23, 59, 59, 0, ZoneOffset.of("Z")))
 
   val mockedRateDTO: RateDTO = RateDTO(
@@ -52,7 +53,7 @@ trait MockedObject {
     bid = BigDecimal(1.2),
     ask = BigDecimal(1.3),
     price = BigDecimal(1.2),
-    timestamp = mockedTimestamp
+    timestamp = mockedTimestamp.value
   )
 
   val mockedRate: Rate = Rate(

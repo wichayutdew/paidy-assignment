@@ -6,10 +6,14 @@ import forex.config.models.ApplicationConfig
 import forex.http.rates.RatesHttpRoutes
 import forex.programs._
 import forex.services._
+import io.lettuce.core.{ RedisClient, RedisURI }
+import io.lettuce.core.api.sync.RedisCommands
 import org.http4s._
 import org.http4s.client.Client
 import org.http4s.implicits._
 import org.http4s.server.middleware.{ AutoSlash, Timeout }
+
+import java.time.Duration
 
 class Module[F[_]: Concurrent: Timer](
     config: ApplicationConfig,
@@ -28,6 +32,19 @@ class Module[F[_]: Concurrent: Timer](
   }
   private val secretManagerService: SecretManagerService[F] = SecretManagerServices.vault[F](vaultClient)
 
+  // External Cache
+  private val redisClient: RedisCommands[String, String] = {
+    val password: CharSequence = config.client.redis.token
+    val uri: RedisURI          = RedisURI.Builder
+      .redis(config.client.redis.host, config.client.redis.port)
+      .withPassword(password)
+      .withTimeout(Duration.ofMillis(config.client.redis.connectionTimeout.toMillis))
+      .build()
+    val redisClient: RedisClient = RedisClient.create(uri)
+    redisClient.connect().sync()
+  }
+  private val externalCacheService: ExternalCacheService[F] = ExternalCacheServices.redis[F](redisClient)
+
   // Rates
   private val ratesService: RatesService[F] = RatesServices.oneFrame[F](
     client = httpClient,
@@ -35,7 +52,8 @@ class Module[F[_]: Concurrent: Timer](
   )
 
   /* ------------------------------ PROGRAMS ------------------------------ */
-  private val ratesProgram: RatesProgram[F] = RatesProgram[F](ratesService, secretManagerService)
+  private val ratesProgram: RatesProgram[F] =
+    RatesProgram[F](ratesService, secretManagerService, externalCacheService, config.cache.rates)
 
   /* ------------------------------ SERVER ------------------------------ */
   private val ratesHttpRoutes: HttpRoutes[F] = new RatesHttpRoutes[F](ratesProgram).routes
