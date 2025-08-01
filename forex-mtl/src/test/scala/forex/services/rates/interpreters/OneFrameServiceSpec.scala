@@ -2,9 +2,7 @@ package forex.services.rates.interpreters
 import cats.effect.{ IO, Resource }
 import forex.domain.rates.Rate
 import forex.helper.MockedObject
-import forex.services.rates.errors.Error.{ DecodingFailure, ExchangeRateNotFound, InvalidToken, OneFrameLookupFailed }
-import forex.services.secretManager.errors.Error.SecretLookupFailed
-import forex.services.secretManager.errors._
+import forex.services.rates.errors.Error.{ DecodingFailure, ExchangeRateNotFound, OneFrameLookupFailed }
 import org.http4s.client.Client
 import org.http4s.{ Request, Response, Status }
 import org.mockito.scalatest.MockitoSugar
@@ -22,7 +20,7 @@ class OneFrameServiceSpec extends AnyWordSpec with Matchers with MockitoSugar wi
         )
         when(mockedClient.run(any[Request[IO]])).thenReturn(Resource.pure[IO, Response[IO]](mockResponse))
 
-        whenReady(service().get(mockedRate.pair).unsafeToFuture()) { response =>
+        whenReady(service.get(mockedRate.pair, mockedToken).unsafeToFuture()) { response =>
           response shouldBe Right(Rate.fromOneFrameDTO(mockedRateDTO))
         }
       }
@@ -31,7 +29,7 @@ class OneFrameServiceSpec extends AnyWordSpec with Matchers with MockitoSugar wi
         val mockResponse: Response[IO] = Response[IO](status = Status.Ok).withEntity("[]")
         when(mockedClient.run(any[Request[IO]])).thenReturn(Resource.pure[IO, Response[IO]](mockResponse))
 
-        whenReady(service().get(mockedRate.pair).unsafeToFuture()) { response =>
+        whenReady(service.get(mockedRate.pair, mockedToken).unsafeToFuture()) { response =>
           response shouldBe Left(ExchangeRateNotFound(s"${mockedRate.pair.from} to ${mockedRate.pair.to}"))
         }
       }
@@ -40,7 +38,7 @@ class OneFrameServiceSpec extends AnyWordSpec with Matchers with MockitoSugar wi
         val mockResponse: Response[IO] = Response[IO](status = Status.BadGateway).withEntity("Error")
         when(mockedClient.run(any[Request[IO]])).thenReturn(Resource.pure[IO, Response[IO]](mockResponse))
 
-        whenReady(service().get(mockedRate.pair).unsafeToFuture()) { response =>
+        whenReady(service.get(mockedRate.pair, mockedToken).unsafeToFuture()) { response =>
           response shouldBe Left(OneFrameLookupFailed("Error"))
         }
       }
@@ -49,29 +47,20 @@ class OneFrameServiceSpec extends AnyWordSpec with Matchers with MockitoSugar wi
         val mockResponse: Response[IO] = Response[IO](status = Status.Ok).withEntity("""[{"from":"USD}]""")
         when(mockedClient.run(any[Request[IO]])).thenReturn(Resource.pure[IO, Response[IO]](mockResponse))
 
-        whenReady(service().get(mockedRate.pair).unsafeToFuture()) { response =>
+        whenReady(service.get(mockedRate.pair, mockedToken).unsafeToFuture()) { response =>
           response.isLeft shouldBe true
           response.left.toOption.get shouldBe a[DecodingFailure]
-        }
-      }
-
-      "return InvalidToken if token is invalid" in new Fixture {
-        private val invalidToken = IO.pure(Left(SecretLookupFailed("secret not found")))
-        whenReady(service(token = invalidToken).get(mockedRate.pair).unsafeToFuture()) { response =>
-          response shouldBe Left(InvalidToken("secret not found"))
         }
       }
     }
   }
 
   trait Fixture {
-    val mockedClient: Client[IO]             = mock[Client[IO]]
-    val mockedToken: IO[Error Either String] = IO.pure(Right("mocked-token"))
+    val mockedClient: Client[IO] = mock[Client[IO]]
 
-    def service(token: IO[Error Either String] = mockedToken): OneFrameService[IO] = new OneFrameService[IO](
+    val service: OneFrameService[IO] = new OneFrameService[IO](
       mockedClient,
-      mockedApplicationConfig.client.oneFrame,
-      token
+      mockedApplicationConfig.client.oneFrame
     )
   }
 }

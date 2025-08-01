@@ -82,4 +82,6 @@ trait MockedObject {
       )
     )
   )
+
+  val mockedToken = "test-token"
 }

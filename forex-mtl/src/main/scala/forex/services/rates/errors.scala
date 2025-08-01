@@ -1,6 +1,5 @@
 package forex.services.rates
 import forex.domain.core.BaseError
-import forex.services.secretManager.errors.{ Error => VaultError }
 
 object errors {
 
@@ -9,11 +8,5 @@ object errors {
     final case class OneFrameLookupFailed(msg: String) extends Error
     final case class ExchangeRateNotFound(msg: String) extends Error
     final case class DecodingFailure(msg: String) extends Error
-    final case class InvalidToken(msg: String) extends Error
   }
-
-  def toRatesError(error: VaultError): Error = error match {
-    case VaultError.SecretLookupFailed(msg) => Error.InvalidToken(msg)
-  }
-
 }
