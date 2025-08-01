@@ -1,10 +1,10 @@
 package forex.helper
-import forex.config.models.{ ApplicationConfig, ClientSetting, OneFrameConfig, ServerSetting, VaultConfig }
+import forex.config.models._
 import forex.domain.oneframe.RateDTO
 import forex.domain.rates._
 
 import java.time.{ OffsetDateTime, ZoneOffset }
-import scala.concurrent.duration.{ FiniteDuration, SECONDS }
+import scala.concurrent.duration.{ FiniteDuration, HOURS, MINUTES, SECONDS }
 
 trait MockedObject {
 
@@ -28,9 +28,28 @@ trait MockedObject {
                                                 |      connection-timeout = 30 seconds
                                                 |      token = "test-token"
                                                 |    }
+                                                |    redis {
+                                                |      host = "localhost"
+                                                |      port = 6379
+                                                |      connection-timeout = 30 seconds
+                                                |      token = "test-token"
+                                                |    }
+                                                |  }
+                                                |  cache {
+                                                |    rates {
+                                                |      enabled = true
+                                                |      prefix = "rates"
+                                                |      ttl = 5 minutes
+                                                |    }
+                                                |    token {
+                                                |      enabled = true
+                                                |      prefix = "token"
+                                                |      ttl = 3 hours
+                                                |    }
                                                 |  }
                                                 |}""".stripMargin
 
+  val mockedTimestampObject      = """{"value":"2099-12-31T23:59:59Z"}"""
   val mockedTimestamp: Timestamp = Timestamp(OffsetDateTime.of(2099, 12, 31, 23, 59, 59, 0, ZoneOffset.of("Z")))
 
   val mockedRateDTO: RateDTO = RateDTO(
@@ -39,7 +58,7 @@ trait MockedObject {
     bid = BigDecimal(1.2),
     ask = BigDecimal(1.3),
     price = BigDecimal(1.2),
-    timestamp = mockedTimestamp
+    timestamp = mockedTimestamp.value
   )
 
   val mockedRate: Rate = Rate(
@@ -67,7 +86,23 @@ trait MockedObject {
         requestTimeout = FiniteDuration(30, SECONDS),
         connectionTimeout = FiniteDuration(30, SECONDS),
         token = "test-token"
+      ),
+      redis = RedisConfig(
+        host = "localhost",
+        port = 6379,
+        connectionTimeout = FiniteDuration(30, SECONDS),
+        token = "test-token"
       )
+    ),
+    cache = CacheSetting(
+      rates = CacheConfig(
+        enabled = true,
+        prefix = "rates",
+        ttl = FiniteDuration(5, MINUTES)
+      ),
+      token = CacheConfig(enabled = true, prefix = "token", ttl = FiniteDuration(3, HOURS))
     )
   )
+
+  val mockedToken = "test-token"
 }

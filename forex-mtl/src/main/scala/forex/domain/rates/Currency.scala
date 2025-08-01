@@ -4,7 +4,7 @@ import cats.Show
 import cats.implicits.toBifunctorOps
 import enumeratum.{ Enum, EnumEntry }
 import forex.domain.core.BaseError
-import io.circe.Decoder
+import io.circe.{ Decoder, Encoder }
 
 sealed trait Currency extends EnumEntry
 object Currency extends Enum[Currency] {
@@ -29,6 +29,13 @@ object Currency extends Enum[Currency] {
     case str                => withNameOption(str).map(Right(_)).getOrElse(Left(CurrencyError.Unsupported(str)))
   }
 
+  def getAllPairs: List[Pair] = (for {
+    from <- values
+    to <- values
+    if from != to
+  } yield Pair(from, to)).toList
+
+  implicit val currencyEncoder: Encoder[Currency] = Encoder.encodeString.contramap[Currency](_.entryName)
   implicit val currencyDecoder: Decoder[Currency] = Decoder.decodeString.emap(str =>
     fromString(str).leftMap {
       case CurrencyError.Empty             => "Currency code is empty"

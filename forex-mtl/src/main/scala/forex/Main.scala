@@ -26,6 +26,7 @@ class Application[F[_]: ConcurrentEffect: Timer] {
                     .resource
                 )
       module = new Module[F](config, client)
+      _ <- Stream.eval(module.ratesProgram.preFetch()) // Prefetch rates at startup
       _ <- BlazeServerBuilder[F](ec)
              .bindHttp(config.server.port, config.server.host)
              .withHttpApp(module.httpApp)

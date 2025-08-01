@@ -1,6 +1,7 @@
 package forex.programs.rates
 import forex.domain.core.BaseError
 import forex.services.rates.errors.{ Error => RatesServiceError }
+import forex.services.secretManager.errors.{ Error => SecretManagerServiceError }
 
 object errors {
 
@@ -11,10 +12,9 @@ object errors {
     final case class DecodingFailure(msg: String) extends Error
   }
 
-  def toProgramError(error: RatesServiceError): Error = error match {
-    case RatesServiceError.OneFrameLookupFailed(msg) => Error.RateLookupFailed(msg)
-    case RatesServiceError.InvalidToken(msg)         => Error.RateLookupFailed(msg)
-    case RatesServiceError.ExchangeRateNotFound(msg) => Error.ExchangeRateNotFound(msg)
-    case RatesServiceError.DecodingFailure(msg)      => Error.DecodingFailure(msg)
+  def toProgramError(error: BaseError): Error = error match {
+    case RatesServiceError.OneFrameLookupFailed(msg)       => Error.RateLookupFailed(msg)
+    case SecretManagerServiceError.SecretLookupFailed(msg) => Error.RateLookupFailed(msg)
+    case RatesServiceError.DecodingFailure(msg)            => Error.DecodingFailure(msg)
   }
 }

@@ -10,12 +10,12 @@ class OneFrameDummySpec extends AnyWordSpec with Matchers with MockedObject {
   "OneFrameDummy" when {
     "get" should {
       "return a dummy rate for any pair" in new Fixture {
-        val result: Id[Either[errors.Error, Rate]] = client.get(mockedRate.pair)
+        val results: Id[Either[errors.Error, List[Rate]]] = client.get(List(mockedRate.pair), mockedToken)
 
-        result.isRight shouldBe true
-        result.toOption.get.pair.from shouldBe Currency.CHF
-        result.toOption.get.pair.to shouldBe Currency.CAD
-        result.toOption.get.price.value shouldBe BigDecimal(100)
+        results.isRight shouldBe true
+        results.toOption.get.head.pair.from shouldBe Currency.CHF
+        results.toOption.get.head.pair.to shouldBe Currency.CAD
+        results.toOption.get.head.price.value shouldBe BigDecimal(100)
         // Skipping timestamp check as it's too dynamic to test
       }
     }

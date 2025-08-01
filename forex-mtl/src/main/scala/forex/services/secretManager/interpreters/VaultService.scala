@@ -1,8 +1,8 @@
-package forex.services.vault.interpreters
+package forex.services.secretManager.interpreters
 import cats.Applicative
 import com.bettercloud.vault.Vault
-import forex.services.vault.Algebra
-import forex.services.vault.errors._
+import forex.services.secretManager.Algebra
+import forex.services.secretManager.errors._
 
 import scala.util.Try
 

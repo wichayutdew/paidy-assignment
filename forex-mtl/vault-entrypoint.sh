@@ -8,5 +8,6 @@ until vault status > /dev/null 2>&1; do
 done
 
 vault kv put secret/forex/one-frame token="${ONE_FRAME_TOKEN}"
+vault kv put secret/forex/redis token="${REDIS_TOKEN}"
 
 wait $VAULT_PID

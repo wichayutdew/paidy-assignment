@@ -11,6 +11,7 @@ object Dependencies {
     val pureConfig = "0.17.4"
     val enumeratum = "1.9.0"
     val vault      = "5.1.0"
+    val redis      = "6.7.1.RELEASE"
 
     val kindProjector    = "0.13.2"
     val logback          = "1.2.3"
@@ -36,9 +37,8 @@ object Dependencies {
     lazy val circeGeneric    = circe("circe-generic")
     lazy val circeGenericExt = circe("circe-generic-extras")
     lazy val circeParser     = circe("circe-parser")
-    lazy val pureConfig      = "com.github.pureconfig" %% "pureconfig"        % Versions.pureConfig
-    lazy val enumeratum      = "com.beachape"          %% "enumeratum"        % Versions.enumeratum
-    lazy val vault           = "com.bettercloud"        % "vault-java-driver" % Versions.vault
+    lazy val pureConfig      = "com.github.pureconfig" %% "pureconfig" % Versions.pureConfig
+    lazy val enumeratum      = "com.beachape"          %% "enumeratum" % Versions.enumeratum
 
     // Compiler plugins
     lazy val kindProjector = "org.typelevel" %% "kind-projector" % Versions.kindProjector cross CrossVersion.full
@@ -51,6 +51,11 @@ object Dependencies {
     lazy val scalaCheck       = "org.scalacheck"    %% "scalacheck"              % Versions.scalaCheck
     lazy val catsScalaCheck   = "io.chrisdavenport" %% "cats-scalacheck"         % Versions.catsScalaCheck
     lazy val mockitoScalaTest = "org.mockito"       %% "mockito-scala-scalatest" % Versions.mockitoScalaTest
+  }
+
+  object JavaLibraries {
+    lazy val vault = "com.bettercloud" % "vault-java-driver" % Versions.vault
+    lazy val redis = "io.lettuce"      % "lettuce-core"      % Versions.redis
   }
 
 }
