@@ -1,6 +1,5 @@
 package forex.services.externalCache.interpreters
 import cats.effect.IO
-import forex.services.externalCache.errors._
 import io.lettuce.core.SetArgs
 import io.lettuce.core.api.sync.RedisCommands
 import org.mockito.scalatest.MockitoSugar
@@ -16,23 +15,9 @@ class RedisServiceSpec extends AnyWordSpec with Matchers with MockitoSugar with 
       "fill cache successfully" in new Fixture {
         when(redisClientMocked.set(any[String], any[String], any[SetArgs])).thenReturn("OK")
 
-        whenReady(redisService.set("key", "value", FiniteDuration(30, SECONDS)).unsafeToFuture()) { response =>
-          response shouldBe Right("Value set successfully")
-        }
-      }
-      "return CachePutFailed due to unknown error" in new Fixture {
-        when(redisClientMocked.set(any[String], any[String], any[SetArgs])).thenReturn("")
+        redisService.set("key", "value", FiniteDuration(30, SECONDS))
 
-        whenReady(redisService.set("key", "value", FiniteDuration(30, SECONDS)).unsafeToFuture()) { response =>
-          response shouldBe Left(Error.CachePutFailed("Failed to set value for key 'key'"))
-        }
-      }
-      "return CachePutFailed due to error while calling redis" in new Fixture {
-        when(redisClientMocked.set(any[String], any[String], any[SetArgs])).thenThrow(new Exception("error"))
-
-        whenReady(redisService.set("key", "value", FiniteDuration(30, SECONDS)).unsafeToFuture()) { response =>
-          response shouldBe Left(Error.CachePutFailed("error"))
-        }
+        verify(redisClientMocked).set(any[String], any[String], any[SetArgs])
       }
     }
 
@@ -41,21 +26,14 @@ class RedisServiceSpec extends AnyWordSpec with Matchers with MockitoSugar with 
         when(redisClientMocked.get(any[String])).thenReturn("result")
 
         whenReady(redisService.get("key").unsafeToFuture()) { response =>
-          response shouldBe Right("result")
+          response shouldBe Some("result")
         }
       }
-      "return CacheExpired if cache is expired" in new Fixture {
-        when(redisClientMocked.get(any[String])).thenReturn(null)
-
-        whenReady(redisService.get("key").unsafeToFuture()) { response =>
-          response shouldBe Left(Error.CacheExpired("cache 'key' expired"))
-        }
-      }
-      "return CacheGetFailed due to error while calling redis" in new Fixture {
+      "return None due to error while calling redis" in new Fixture {
         when(redisClientMocked.get(any[String])).thenThrow(new Exception("error"))
 
         whenReady(redisService.get("key").unsafeToFuture()) { response =>
-          response shouldBe Left(Error.CacheGetFailed("error"))
+          response shouldBe None
         }
       }
     }
