@@ -3,8 +3,8 @@ import cats.effect.{ IO, Resource }
 import forex.domain.rates.Rate
 import forex.helper.MockedObject
 import forex.services.rates.errors.Error.{ DecodingFailure, ExchangeRateNotFound, InvalidToken, OneFrameLookupFailed }
-import forex.services.vault.errors.Error.SecretLookupFailed
-import forex.services.vault.errors._
+import forex.services.secretManager.errors.Error.SecretLookupFailed
+import forex.services.secretManager.errors._
 import org.http4s.client.Client
 import org.http4s.{ Request, Response, Status }
 import org.mockito.scalatest.MockitoSugar

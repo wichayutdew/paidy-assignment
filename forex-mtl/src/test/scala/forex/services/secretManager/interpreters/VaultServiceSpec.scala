@@ -1,9 +1,9 @@
-package forex.services.vault.interpreters
+package forex.services.secretManager.interpreters
 import cats.effect.IO
 import com.bettercloud.vault.Vault
 import com.bettercloud.vault.api.Logical
 import com.bettercloud.vault.response.LogicalResponse
-import forex.services.vault.errors._
+import forex.services.secretManager.errors._
 import org.mockito.scalatest.MockitoSugar
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.matchers.should.Matchers

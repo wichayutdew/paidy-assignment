@@ -4,7 +4,7 @@ import cats.Applicative
 import cats.effect.Sync
 import forex.config.models.OneFrameConfig
 import forex.services.rates.interpreters._
-import forex.services.vault.errors.{ Error => VaultError }
+import forex.services.secretManager.errors.{ Error => VaultError }
 import org.http4s.client.Client
 
 //$COVERAGE-OFF$

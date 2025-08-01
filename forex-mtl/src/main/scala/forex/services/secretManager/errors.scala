@@ -1,4 +1,4 @@
-package forex.services.vault
+package forex.services.secretManager
 
 import forex.domain.core.BaseError
 

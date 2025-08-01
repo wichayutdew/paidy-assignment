@@ -1,8 +1,8 @@
-package forex.services.vault
+package forex.services.secretManager
 
 import cats.Applicative
 import com.bettercloud.vault.Vault
-import forex.services.vault.interpreters.VaultService
+import forex.services.secretManager.interpreters.VaultService
 
 //$COVERAGE-OFF$
 object Interpreters {

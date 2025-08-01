@@ -1,6 +1,6 @@
 package forex.services.rates
 import forex.services.rates.errors.{ Error => RatesServiceError }
-import forex.services.vault.errors.{ Error => VaultError }
+import forex.services.secretManager.errors.{ Error => VaultError }
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 

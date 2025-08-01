@@ -1,6 +1,6 @@
 package forex.services.rates
 import forex.domain.core.BaseError
-import forex.services.vault.errors.{ Error => VaultError }
+import forex.services.secretManager.errors.{ Error => VaultError }
 
 object errors {
 

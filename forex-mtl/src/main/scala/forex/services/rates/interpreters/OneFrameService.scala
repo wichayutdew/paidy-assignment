@@ -10,7 +10,7 @@ import forex.domain.rates.{ Pair, Rate }
 import forex.services.rates.Algebra
 import forex.services.rates.errors.Error.{ DecodingFailure, ExchangeRateNotFound, OneFrameLookupFailed }
 import forex.services.rates.errors._
-import forex.services.vault.errors.{ Error => VaultError }
+import forex.services.secretManager.errors.{ Error => VaultError }
 import org.http4s.Method.GET
 import org.http4s.Status.Ok
 import org.http4s._
