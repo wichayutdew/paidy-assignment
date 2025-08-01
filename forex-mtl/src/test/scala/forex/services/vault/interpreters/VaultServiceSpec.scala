@@ -31,9 +31,9 @@ class VaultServiceSpec extends AnyWordSpec with Matchers with MockitoSugar with 
         }
       }
 
-       "return an error when the key is invalid" in new Fixture {
-         when(logicalMocked.read(any[String])).thenReturn(logicalResponseMocked)
-         when(logicalResponseMocked.getData).thenReturn(Map("token" -> "valid-token").asJava)
+      "return an error when the key is invalid" in new Fixture {
+        when(logicalMocked.read(any[String])).thenReturn(logicalResponseMocked)
+        when(logicalResponseMocked.getData).thenReturn(Map("token" -> "valid-token").asJava)
 
         whenReady(vaultService.get("path", "key").unsafeToFuture()) { response =>
           response shouldBe Left(Error.SecretLookupFailed("Key 'key' not found at path 'path'"))
