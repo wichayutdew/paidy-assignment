@@ -39,7 +39,7 @@ class Module[F[_]: Concurrent: Timer](
     val password: CharSequence = config.client.redis.token
     val uri: RedisURI          = RedisURI.Builder
       .redis(config.client.redis.host, config.client.redis.port)
-      .withPassword(password)
+      .withPassword(password) // find a way to fetched from secret manager
       .withTimeout(Duration.ofMillis(config.client.redis.connectionTimeout.toMillis))
       .build()
     val redisClient: RedisClient = RedisClient.create(uri)
