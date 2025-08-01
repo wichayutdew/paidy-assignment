@@ -11,9 +11,9 @@ import scala.util.Try
 class RedisService[F[_]: Applicative](client: RedisCommands[String, String]) extends Algebra[F] {
   override def set(key: String, value: String, ttl: FiniteDuration): Unit =
     Try(client.set(key, value, SetArgs.Builder.px(ttl.toMillis))).toEither match {
-      case Right(_)    => // TODO: add log/metric to measure cache put fail rate
-      case Left(_) => // TODO: add log/metric to measure cache put fail with error
-      case _           =>
+      case Right(_) => // TODO: add log/metric to measure cache put fail rate
+      case Left(_)  => // TODO: add log/metric to measure cache put fail with error
+      case _        =>
     }
 
   override def get(key: String): F[Option[String]] = Try(client.get(key)).toEither match {
