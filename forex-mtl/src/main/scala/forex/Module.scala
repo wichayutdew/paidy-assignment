@@ -5,7 +5,7 @@ import com.bettercloud.vault.{ Vault, VaultConfig }
 import forex.config.models.ApplicationConfig
 import forex.http.rates.RatesHttpRoutes
 import forex.programs._
-import forex.services._
+import forex.services.{ CacheService, _ }
 import io.lettuce.core.{ RedisClient, RedisURI }
 import io.lettuce.core.api.sync.RedisCommands
 import org.http4s._
@@ -43,7 +43,7 @@ class Module[F[_]: Concurrent: Timer](
     val redisClient: RedisClient = RedisClient.create(uri)
     redisClient.connect().sync()
   }
-  private val externalCacheService: ExternalCacheService[F] = ExternalCacheServices.redis[F](redisClient)
+  private val redisService: CacheService[F] = CacheServices.redis[F](redisClient)
 
   // Rates
   private val ratesService: RatesService[F] = RatesServices.oneFrame[F](
@@ -53,7 +53,7 @@ class Module[F[_]: Concurrent: Timer](
 
   /* ------------------------------ PROGRAMS ------------------------------ */
   val ratesProgram: RatesProgram[F] =
-    RatesProgram[F](ratesService, secretManagerService, externalCacheService, config.cache.rates)
+    RatesProgram[F](ratesService, secretManagerService, redisService, config.cache.rates)
 
   /* ------------------------------ SERVER ------------------------------ */
   private val ratesHttpRoutes: HttpRoutes[F] = new RatesHttpRoutes[F](ratesProgram).routes

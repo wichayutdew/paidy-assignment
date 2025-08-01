@@ -1,4 +1,4 @@
-package forex.services.externalCache
+package forex.services.cache
 
 import scala.concurrent.duration.FiniteDuration
 

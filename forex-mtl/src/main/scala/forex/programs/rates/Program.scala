@@ -8,14 +8,14 @@ import forex.domain.rates.{ Currency, Pair, Rate }
 import forex.domain.vault.Constant.{ Key, Path }
 import forex.programs.rates.errors.Error.DecodingFailure
 import forex.programs.rates.errors._
-import forex.services.{ ExternalCacheService, RatesService, SecretManagerService }
+import forex.services.{ CacheService, RatesService, SecretManagerService }
 import io.circe.syntax.EncoderOps
 import io.circe.parser.decode
 
 class Program[F[_]: Monad](
     ratesService: RatesService[F],
     secretManagerService: SecretManagerService[F],
-    externalCacheService: ExternalCacheService[F],
+    acheService: CacheService[F],
     ratesCacheConfig: CacheConfig
 ) extends Algebra[F] {
   override def preFetch(): F[Unit] = fetchRates(Currency.getAllPairs, shouldFillCache = true).void
@@ -24,7 +24,7 @@ class Program[F[_]: Monad](
     val exchangeRatePair = Pair(request.from, request.to)
     if (ratesCacheConfig.enabled) {
       val cacheKey = s"${ratesCacheConfig.prefix}_${exchangeRatePair.toCacheKey}"
-      externalCacheService.get(cacheKey).flatMap {
+      acheService.get(cacheKey).flatMap {
         case Some(rateString) => fromJsonString(rateString)
         case None             => findRate(exchangeRatePair, fetchRates(List(exchangeRatePair), shouldFillCache = true))
       }
@@ -56,7 +56,7 @@ class Program[F[_]: Monad](
   } yield rates.map { rate =>
     if (shouldFillCache) {
       val cacheKey = s"${ratesCacheConfig.prefix}_${rate.pair.toCacheKey}"
-      externalCacheService.set(cacheKey, rate.asJson.noSpaces, ratesCacheConfig.ttl)
+      acheService.set(cacheKey, rate.asJson.noSpaces, ratesCacheConfig.ttl)
     }
     rate
   }).value
@@ -67,8 +67,8 @@ object Program {
   def apply[F[_]: Monad](
       ratesService: RatesService[F],
       secretManagerService: SecretManagerService[F],
-      externalCacheService: ExternalCacheService[F],
+      acheService: CacheService[F],
       ratesCacheConfig: CacheConfig
-  ): Program[F] = new Program[F](ratesService, secretManagerService, externalCacheService, ratesCacheConfig)
+  ): Program[F] = new Program[F](ratesService, secretManagerService, acheService, ratesCacheConfig)
 
 }

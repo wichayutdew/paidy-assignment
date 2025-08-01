@@ -5,7 +5,7 @@ import forex.helper.MockedObject
 import forex.programs.rates.errors.Error.{ ExchangeRateNotFound, RateLookupFailed }
 import forex.services.rates.errors.Error.OneFrameLookupFailed
 import forex.services.secretManager.errors.Error.SecretLookupFailed
-import forex.services.{ ExternalCacheService, RatesService, SecretManagerService }
+import forex.services.{ CacheService, RatesService, SecretManagerService }
 import io.circe.syntax.EncoderOps
 import org.mockito.scalatest.MockitoSugar
 import org.scalatest.concurrent.ScalaFutures
@@ -26,7 +26,7 @@ class ProgramSpec extends AnyWordSpec with Matchers with MockitoSugar with Mocke
             response shouldBe Right(mockedRate)
             verify(secretManagerServiceMock).get(any[String], any[String])
             verify(ratesServiceMock).get(any[List[Pair]], any[String])
-            verifyZeroInteractions(externalCacheServiceMock)
+            verifyZeroInteractions(cacheServiceMock)
         }
       }
 
@@ -39,7 +39,7 @@ class ProgramSpec extends AnyWordSpec with Matchers with MockitoSugar with Mocke
             response shouldBe Left(ExchangeRateNotFound(s"${mockedRate.pair.from} to ${mockedRate.pair.to}"))
             verify(secretManagerServiceMock).get(any[String], any[String])
             verify(ratesServiceMock).get(any[List[Pair]], any[String])
-            verifyZeroInteractions(externalCacheServiceMock)
+            verifyZeroInteractions(cacheServiceMock)
         }
       }
 
@@ -53,7 +53,7 @@ class ProgramSpec extends AnyWordSpec with Matchers with MockitoSugar with Mocke
             response shouldBe Left(RateLookupFailed("failed"))
             verify(secretManagerServiceMock).get(any[String], any[String])
             verify(ratesServiceMock).get(any[List[Pair]], any[String])
-            verifyZeroInteractions(externalCacheServiceMock)
+            verifyZeroInteractions(cacheServiceMock)
         }
       }
 
@@ -66,14 +66,14 @@ class ProgramSpec extends AnyWordSpec with Matchers with MockitoSugar with Mocke
             response shouldBe Left(RateLookupFailed("failed"))
             verify(secretManagerServiceMock).get(any[String], any[String])
             verifyZeroInteractions(ratesServiceMock)
-            verifyZeroInteractions(externalCacheServiceMock)
+            verifyZeroInteractions(cacheServiceMock)
         }
       }
     }
 
     "get with cache" should {
       "return rate from cache successfully" in new Fixture {
-        when(externalCacheServiceMock.get(any[String])).thenReturn(IO.pure(Some(mockedRate.asJson.noSpaces)))
+        when(cacheServiceMock.get(any[String])).thenReturn(IO.pure(Some(mockedRate.asJson.noSpaces)))
 
         whenReady(
           program(enableCache = true)
@@ -81,14 +81,14 @@ class ProgramSpec extends AnyWordSpec with Matchers with MockitoSugar with Mocke
             .unsafeToFuture()
         ) { response =>
           response shouldBe Right(mockedRate)
-          verify(externalCacheServiceMock).get(any[String])
+          verify(cacheServiceMock).get(any[String])
           verifyZeroInteractions(secretManagerServiceMock)
           verifyZeroInteractions(ratesServiceMock)
         }
       }
 
       "return error when Exchange rate is not found" in new Fixture {
-        when(externalCacheServiceMock.get(any[String])).thenReturn(IO.pure(None))
+        when(cacheServiceMock.get(any[String])).thenReturn(IO.pure(None))
         when(secretManagerServiceMock.get(any[String], any[String])).thenReturn(IO.pure(Right("token")))
         when(ratesServiceMock.get(any[List[Pair]], any[String]))
           .thenReturn(IO.pure(Right(List(mockedRate.copy(pair = Pair(Currency.USD, Currency.CAD))))))
@@ -99,15 +99,15 @@ class ProgramSpec extends AnyWordSpec with Matchers with MockitoSugar with Mocke
             .unsafeToFuture()
         ) { response =>
           response shouldBe Left(ExchangeRateNotFound(s"${mockedRate.pair.from} to ${mockedRate.pair.to}"))
-          verify(externalCacheServiceMock).get(any[String])
+          verify(cacheServiceMock).get(any[String])
           verify(secretManagerServiceMock).get(any[String], any[String])
           verify(ratesServiceMock).get(any[List[Pair]], any[String])
-          verify(externalCacheServiceMock).set(any[String], any[String], any[FiniteDuration])
+          verify(cacheServiceMock).set(any[String], any[String], any[FiniteDuration])
         }
       }
 
       "return rate from api response and put into cache if cache is empty" in new Fixture {
-        when(externalCacheServiceMock.get(any[String])).thenReturn(IO.pure(None))
+        when(cacheServiceMock.get(any[String])).thenReturn(IO.pure(None))
         when(secretManagerServiceMock.get(any[String], any[String])).thenReturn(IO.pure(Right("token")))
         when(ratesServiceMock.get(any[List[Pair]], any[String])).thenReturn(IO.pure(Right(List(mockedRate))))
 
@@ -117,15 +117,15 @@ class ProgramSpec extends AnyWordSpec with Matchers with MockitoSugar with Mocke
             .unsafeToFuture()
         ) { response =>
           response shouldBe Right(mockedRate)
-          verify(externalCacheServiceMock).get(any[String])
+          verify(cacheServiceMock).get(any[String])
           verify(secretManagerServiceMock).get(any[String], any[String])
           verify(ratesServiceMock).get(any[List[Pair]], any[String])
-          verify(externalCacheServiceMock).set(any[String], any[String], any[FiniteDuration])
+          verify(cacheServiceMock).set(any[String], any[String], any[FiniteDuration])
         }
       }
 
       "return error and not fill cache when RatesService returns error" in new Fixture {
-        when(externalCacheServiceMock.get(any[String])).thenReturn(IO.pure(None))
+        when(cacheServiceMock.get(any[String])).thenReturn(IO.pure(None))
         when(secretManagerServiceMock.get(any[String], any[String])).thenReturn(IO.pure(Right("token")))
         when(ratesServiceMock.get(any[List[Pair]], any[String]))
           .thenReturn(IO.pure(Left(OneFrameLookupFailed("failed"))))
@@ -136,15 +136,15 @@ class ProgramSpec extends AnyWordSpec with Matchers with MockitoSugar with Mocke
             .unsafeToFuture()
         ) { response =>
           response shouldBe Left(RateLookupFailed("failed"))
-          verify(externalCacheServiceMock).get(any[String])
+          verify(cacheServiceMock).get(any[String])
           verify(secretManagerServiceMock).get(any[String], any[String])
           verify(ratesServiceMock).get(any[List[Pair]], any[String])
-          verifyNoMoreInteractions(externalCacheServiceMock)
+          verifyNoMoreInteractions(cacheServiceMock)
         }
       }
 
       "return error and not fill cache when SecretManagerService returns error" in new Fixture {
-        when(externalCacheServiceMock.get(any[String])).thenReturn(IO.pure(None))
+        when(cacheServiceMock.get(any[String])).thenReturn(IO.pure(None))
         when(secretManagerServiceMock.get(any[String], any[String]))
           .thenReturn(IO.pure(Left(SecretLookupFailed("failed"))))
 
@@ -154,10 +154,10 @@ class ProgramSpec extends AnyWordSpec with Matchers with MockitoSugar with Mocke
             .unsafeToFuture()
         ) { response =>
           response shouldBe Left(RateLookupFailed("failed"))
-          verify(externalCacheServiceMock).get(any[String])
+          verify(cacheServiceMock).get(any[String])
           verify(secretManagerServiceMock).get(any[String], any[String])
           verifyZeroInteractions(ratesServiceMock)
-          verifyNoMoreInteractions(externalCacheServiceMock)
+          verifyNoMoreInteractions(cacheServiceMock)
         }
       }
     }
@@ -170,7 +170,7 @@ class ProgramSpec extends AnyWordSpec with Matchers with MockitoSugar with Mocke
         whenReady(program(enableCache = true).preFetch().unsafeToFuture()) { _ =>
           verify(secretManagerServiceMock, times(1)).get(any[String], any[String])
           verify(ratesServiceMock, times(1)).get(Currency.getAllPairs, "token")
-          verify(externalCacheServiceMock, times(1)).set(any[String], any[String], any[FiniteDuration])
+          verify(cacheServiceMock, times(1)).set(any[String], any[String], any[FiniteDuration])
         }
       }
     }
@@ -179,12 +179,12 @@ class ProgramSpec extends AnyWordSpec with Matchers with MockitoSugar with Mocke
   trait Fixture {
     val ratesServiceMock: RatesService[IO]                 = mock[RatesService[IO]]
     val secretManagerServiceMock: SecretManagerService[IO] = mock[SecretManagerService[IO]]
-    val externalCacheServiceMock: ExternalCacheService[IO] = mock[ExternalCacheService[IO]]
+    val cacheServiceMock: CacheService[IO]                 = mock[CacheService[IO]]
 
     def program(enableCache: Boolean = false): Program[IO] = new Program[IO](
       ratesServiceMock,
       secretManagerServiceMock,
-      externalCacheServiceMock,
+      cacheServiceMock,
       mockedApplicationConfig.cache.rates.copy(enabled = enableCache)
     )
   }

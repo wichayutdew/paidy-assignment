@@ -1,7 +1,7 @@
-package forex.services.externalCache.interpreters
+package forex.services.cache.interpreters
 
 import cats.Applicative
-import forex.services.externalCache.Algebra
+import forex.services.cache.Algebra
 import io.lettuce.core.SetArgs
 import io.lettuce.core.api.sync.RedisCommands
 

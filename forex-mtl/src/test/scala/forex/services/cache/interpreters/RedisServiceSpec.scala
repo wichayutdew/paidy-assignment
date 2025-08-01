@@ -1,4 +1,4 @@
-package forex.services.externalCache.interpreters
+package forex.services.cache.interpreters
 import cats.effect.IO
 import io.lettuce.core.SetArgs
 import io.lettuce.core.api.sync.RedisCommands

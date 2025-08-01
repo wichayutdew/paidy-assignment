@@ -1,7 +1,7 @@
-package forex.services.externalCache
+package forex.services.cache
 
 import cats.Applicative
-import forex.services.externalCache.interpreters.RedisService
+import forex.services.cache.interpreters.RedisService
 import io.lettuce.core.api.sync.RedisCommands
 
 //$COVERAGE-OFF$
