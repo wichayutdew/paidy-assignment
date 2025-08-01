@@ -1,5 +1,5 @@
 package forex.helper
-import forex.config.models.{ ApplicationConfig, ClientSetting, OneFrameConfig, ServerSetting }
+import forex.config.models.{ ApplicationConfig, ClientSetting, OneFrameConfig, ServerSetting, VaultConfig }
 import forex.domain.oneframe.RateDTO
 import forex.domain.rates._
 
@@ -18,6 +18,12 @@ trait MockedObject {
                                                 |    one-frame {
                                                 |      host = "localhost"
                                                 |      port = 8080
+                                                |      request-timeout = 30 seconds
+                                                |      connection-timeout = 30 seconds
+                                                |    }
+                                                |    vault {
+                                                |      host = "localhost"
+                                                |      port = 8200
                                                 |      request-timeout = 30 seconds
                                                 |      connection-timeout = 30 seconds
                                                 |      token = "test-token"
@@ -48,10 +54,16 @@ trait MockedObject {
       port = 8090,
       requestTimeout = FiniteDuration(40, SECONDS)
     ),
-    client = ClientSetting(oneFrame =
-      OneFrameConfig(
+    client = ClientSetting(
+      oneFrame = OneFrameConfig(
         host = "localhost",
         port = 8080,
+        requestTimeout = FiniteDuration(30, SECONDS),
+        connectionTimeout = FiniteDuration(30, SECONDS)
+      ),
+      vault = VaultConfig(
+        host = "localhost",
+        port = 8200,
         requestTimeout = FiniteDuration(30, SECONDS),
         connectionTimeout = FiniteDuration(30, SECONDS),
         token = "test-token"

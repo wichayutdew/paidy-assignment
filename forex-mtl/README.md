@@ -7,8 +7,13 @@
   - Docker installed and running - _to run all external dependencies e.g. One Frame API, Redis, etc._
 
 ## Running the project locally
+
+*** for first run, please run this command to make `vault-entrypoint.sh` executable: `chmod +x vault-entrypoint.sh`
+
 ```bash
 cd forex-mtl
+export ONE_FRAME_TOKEN=${ONE_FRAME_TOKEN} # Set your One Frame API token here
+export VAULT_TOKEN=${VAULT_TOKEN} # Set your Vault token here
 docker compose -f external-dependencies.yml up -d
 sbt run
 ```
