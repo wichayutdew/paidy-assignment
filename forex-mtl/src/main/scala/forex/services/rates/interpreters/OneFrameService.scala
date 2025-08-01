@@ -30,10 +30,10 @@ class OneFrameService[F[_]: Sync](client: Client[F], config: OneFrameConfig) ext
   }
 
   private def getRates(pairs: List[Pair], token: String): F[Error Either List[RateDTO]] = {
-    val queryParams: Map[String, String] = pairs.map(pair => QUERY_PARAMETER.PAIR -> s"${pair.from}${pair.to}").toMap
-    val request                          = Request[F](
+    val query: Query = Query.fromPairs(pairs.map(pair => QUERY_PARAMETER.PAIR -> s"${pair.from}${pair.to}"): _*)
+    val request      = Request[F](
       method = GET,
-      uri = baseUri / PATH.RATES withQueryParams queryParams,
+      uri = (baseUri / PATH.RATES).copy(query = query),
       headers = Headers(Header.Raw(CIString(HEADER.TOKEN), token))
     )
 
