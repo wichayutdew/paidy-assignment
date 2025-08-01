@@ -1,6 +1,8 @@
 package forex.domain.rates
 
 import forex.domain.oneframe.RateDTO
+import io.circe.{Decoder, Encoder}
+import io.circe.generic.semiauto.{deriveDecoder, deriveEncoder}
 
 final case class Rate(
     pair: Pair,
@@ -15,4 +17,8 @@ object Rate {
       price = Price(dto.price),
       timestamp = dto.timestamp
     )
+
+
+  implicit val rateDecoder: Decoder[Rate] = deriveDecoder[Rate]
+  implicit val rateEncoder: Encoder[Rate] = deriveEncoder[Rate]
 }

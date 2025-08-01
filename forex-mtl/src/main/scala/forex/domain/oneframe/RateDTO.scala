@@ -12,7 +12,7 @@ final case class RateDTO(
 )
 
 object RateDTO {
-  implicit val rateDecoder: Decoder[RateDTO] = (c: HCursor) =>
+  implicit val rateDTODecoder: Decoder[RateDTO] = (c: HCursor) =>
     for {
       from <- c.downField("from").as[Currency]
       to <- c.downField("to").as[Currency]
