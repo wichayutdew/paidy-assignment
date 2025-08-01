@@ -5,9 +5,11 @@ import com.bettercloud.vault.{ Vault, VaultConfig }
 import forex.config.models.ApplicationConfig
 import forex.http.rates.RatesHttpRoutes
 import forex.programs._
-import forex.services.{ CacheService, _ }
-import io.lettuce.core.{ RedisClient, RedisURI }
+import forex.programs.rates.{ OneFrameAPIProgram, OneFrameTokenProgram }
+import forex.services._
+import forex.services.cache.interpreters.{ InMemoryCacheService, RedisService }
 import io.lettuce.core.api.sync.RedisCommands
+import io.lettuce.core.{ RedisClient, RedisURI }
 import org.http4s._
 import org.http4s.client.Client
 import org.http4s.implicits._
@@ -43,7 +45,10 @@ class Module[F[_]: Concurrent: Timer](
     val redisClient: RedisClient = RedisClient.create(uri)
     redisClient.connect().sync()
   }
-  private val redisService: CacheService[F] = CacheServices.redis[F](redisClient)
+  private val redisService: RedisService[F] = CacheServices.redis[F](redisClient)
+
+  // In-Memory Cache
+  private val inMemoryCacheService: InMemoryCacheService[F] = CacheServices.inMemory[F]
 
   // Rates
   private val ratesService: RatesService[F] = RatesServices.oneFrame[F](
@@ -52,8 +57,12 @@ class Module[F[_]: Concurrent: Timer](
   )
 
   /* ------------------------------ PROGRAMS ------------------------------ */
+  val oneFrameTokenProgram: OneFrameTokenProgram[F] =
+    new OneFrameTokenProgram[F](secretManagerService, inMemoryCacheService, config.cache.token)
+  val oneFrameApiProgram: OneFrameAPIProgram[F] =
+    new OneFrameAPIProgram[F](ratesService, redisService, config.cache.rates)
   val ratesProgram: RatesProgram[F] =
-    RatesProgram[F](ratesService, secretManagerService, redisService, config.cache.rates)
+    RatesProgram[F](oneFrameTokenProgram, oneFrameApiProgram)
 
   /* ------------------------------ SERVER ------------------------------ */
   private val ratesHttpRoutes: HttpRoutes[F] = new RatesHttpRoutes[F](ratesProgram).routes

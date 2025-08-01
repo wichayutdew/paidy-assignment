@@ -2,73 +2,35 @@ package forex.programs.rates
 
 import cats.Monad
 import cats.data.EitherT
-import cats.implicits.{ toFlatMapOps, toFunctorOps }
-import forex.config.models.CacheConfig
-import forex.domain.rates.{ Currency, Pair, Rate }
-import forex.domain.vault.Constant.{ Key, Path }
-import forex.programs.rates.errors.Error.DecodingFailure
+import cats.implicits.toFunctorOps
+import forex.domain.rates.{ Pair, Rate }
 import forex.programs.rates.errors._
-import forex.services.{ CacheService, RatesService, SecretManagerService }
-import io.circe.syntax.EncoderOps
-import io.circe.parser.decode
 
 class Program[F[_]: Monad](
-    ratesService: RatesService[F],
-    secretManagerService: SecretManagerService[F],
-    acheService: CacheService[F],
-    ratesCacheConfig: CacheConfig
+    oneFrameTokenProgram: OneFrameTokenProgram[F],
+    oneFrameApiProgram: OneFrameAPIProgram[F]
 ) extends Algebra[F] {
-  override def preFetch(): F[Unit] = fetchRates(Currency.getAllPairs, shouldFillCache = true).void
+  override def preFetch(): F[Unit] = (for {
+    token <- EitherT(oneFrameTokenProgram.getToken)
+  } yield oneFrameApiProgram.preFetch(token)).value.void
 
   override def get(request: Protocol.GetRatesRequest): F[Error Either Rate] = {
     val exchangeRatePair = Pair(request.from, request.to)
-    if (ratesCacheConfig.enabled) {
-      val cacheKey = s"${ratesCacheConfig.prefix}_${exchangeRatePair.toCacheKey}"
-      acheService.get(cacheKey).flatMap {
-        case Some(rateString) => fromJsonString(rateString)
-        case None             => findRate(exchangeRatePair, fetchRates(List(exchangeRatePair), shouldFillCache = true))
-      }
-    } else
-      findRate(exchangeRatePair, fetchRates(List(exchangeRatePair), shouldFillCache = false))
+    (for {
+      token <- EitherT(oneFrameTokenProgram.getToken)
+      rates <- EitherT(oneFrameApiProgram.get(exchangeRatePair, token))
+    } yield rates).value
   }
-
-  private def fromJsonString(rateString: String): F[Error Either Rate] =
-    decode[Rate](rateString) match {
-      case Right(rate) => Monad[F].pure(Right(rate))
-      case Left(error) => Monad[F].pure(Left(DecodingFailure(error.getMessage)))
-    }
-
-  private def findRate(pair: Pair, ratesF: F[Error Either List[Rate]]): F[Error Either Rate] =
-    ratesF.flatMap {
-      case Right(rates) =>
-        Monad[F].pure(
-          rates
-            .find(_.pair == pair)
-            .map(Right(_))
-            .getOrElse(Left(Error.ExchangeRateNotFound(s"${pair.from} to ${pair.to}")))
-        )
-      case Left(error) => Monad[F].pure(Left(error))
-    }
-
-  private def fetchRates(pair: List[Pair], shouldFillCache: Boolean): F[Error Either List[Rate]] = (for {
-    token <- EitherT(secretManagerService.get(Path.ONE_FRAME, Key.TOKEN)).leftMap(toProgramError)
-    rates <- EitherT(ratesService.get(pair, token)).leftMap(toProgramError)
-  } yield rates.map { rate =>
-    if (shouldFillCache) {
-      val cacheKey = s"${ratesCacheConfig.prefix}_${rate.pair.toCacheKey}"
-      acheService.set(cacheKey, rate.asJson.noSpaces, ratesCacheConfig.ttl)
-    }
-    rate
-  }).value
 }
 
 object Program {
 
   def apply[F[_]: Monad](
-      ratesService: RatesService[F],
-      secretManagerService: SecretManagerService[F],
-      acheService: CacheService[F],
-      ratesCacheConfig: CacheConfig
-  ): Program[F] = new Program[F](ratesService, secretManagerService, acheService, ratesCacheConfig)
+      oneFrameTokenProgram: OneFrameTokenProgram[F],
+      oneFrameApiProgram: OneFrameAPIProgram[F]
+  ): Program[F] = new Program[F](
+    oneFrameTokenProgram,
+    oneFrameApiProgram
+  )
 
 }
