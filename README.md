@@ -84,3 +84,4 @@ The codebase will follow [conventional commit](https://www.conventionalcommits.o
 1. make generic HTTP client and Server Route
 2. convert Error to GenericServerError so we don't need to handle error transformation in every service
 3. Hide sensitive error message from user
+4. create DOCKERFILE to allow service to run in production, split application config into `common` - qa,prod,local,test
