@@ -3,6 +3,7 @@ package forex
 import cats.effect.{ Concurrent, Timer }
 import com.bettercloud.vault.{ Vault, VaultConfig }
 import forex.config.models.ApplicationConfig
+import forex.domain.vault.Constant.{ Key, Path }
 import forex.http.rates.RatesHttpRoutes
 import forex.programs._
 import forex.services._
@@ -28,7 +29,8 @@ class Module[F[_]: Concurrent: Timer](
 
   private val ratesService: RatesService[F] = RatesServices.oneFrame[F](
     client = httpClient,
-    config = config.client.oneFrame
+    config = config.client.oneFrame,
+    token = vaultService.get(Path.ONE_FRAME, Key.TOKEN)
   )
 
   private val ratesProgram: RatesProgram[F] = RatesProgram[F](ratesService)
