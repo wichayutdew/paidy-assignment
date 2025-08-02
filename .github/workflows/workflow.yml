@@ -57,4 +57,6 @@ jobs:
           sbt integrationTest
       - name: Cleanup
         if: always()
-        run: docker compose -f integration-test.yml down -v
+        run: |
+          cd forex-mtl
+          docker compose -f integration-test.yml down -v
