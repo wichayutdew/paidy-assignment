@@ -14,21 +14,17 @@ jobs:
         uses: sbt/setup-sbt@v1
         with:
           sbt-runner-version: 1.8.0
-      - name: Format Check
+      - name: Validate codecov.yml
+        run: curl --data-binary @codecov.yml https://codecov.io/validate
+      - name: Format Check & Compile
         run: |
           cd forex-mtl
+          sbt scalafmtCheckAll
           sbt clean compile
-      - name: Compile
-        run: |
-          cd forex-mtl
-          sbt clean compile
-      - name: Test
+      - name: Test and Coverage
         run: |
           cd forex-mtl
           sbt coverage test
-      - name: Coverage Report
-        run: |
-          cd forex-mtl
           sbt coverageReport
       - name: Upload coverage reports to Codecov
         uses: codecov/codecov-action@v5

@@ -29,12 +29,31 @@ class RedisServiceSpec extends AnyWordSpec with Matchers with MockitoSugar with 
           response shouldBe Some("result")
         }
       }
+
+      "return None due if result is null" in new Fixture {
+        when(redisClientMocked.get(any[String])).thenReturn(null)
+
+        whenReady(redisService.get("key").unsafeToFuture()) { response =>
+          response shouldBe None
+        }
+      }
+
       "return None due to error while calling redis" in new Fixture {
         when(redisClientMocked.get(any[String])).thenThrow(new Exception("error"))
 
         whenReady(redisService.get("key").unsafeToFuture()) { response =>
           response shouldBe None
         }
+      }
+    }
+
+    "delete" should {
+      "delete cache successfully" in new Fixture {
+        when(redisClientMocked.del(any[String])).thenReturn(1L)
+
+        redisService.delete("key")
+
+        verify(redisClientMocked).del(any[String])
       }
     }
   }

@@ -32,7 +32,6 @@ trait MockedObject {
                                                 |      host = "localhost"
                                                 |      port = 6379
                                                 |      connection-timeout = 30 seconds
-                                                |      token = "test-token"
                                                 |    }
                                                 |  }
                                                 |  cache {
@@ -90,8 +89,7 @@ trait MockedObject {
       redis = RedisConfig(
         host = "localhost",
         port = 6379,
-        connectionTimeout = FiniteDuration(30, SECONDS),
-        token = "test-token"
+        connectionTimeout = FiniteDuration(30, SECONDS)
       )
     ),
     cache = CacheSetting(

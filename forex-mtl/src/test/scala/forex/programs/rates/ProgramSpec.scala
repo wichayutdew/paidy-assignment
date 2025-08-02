@@ -77,9 +77,6 @@ class ProgramSpec extends AnyWordSpec with Matchers with MockitoSugar with Mocke
     val oneFrameTokenProgramMocked: OneFrameTokenProgram[IO] = mock[OneFrameTokenProgram[IO]]
     val oneFrameApiProgramMocked: OneFrameAPIProgram[IO]     = mock[OneFrameAPIProgram[IO]]
 
-    val program: Program[IO] = new Program[IO](
-      oneFrameTokenProgramMocked,
-      oneFrameApiProgramMocked
-    )
+    val program: Program[IO] = Program[IO](oneFrameTokenProgramMocked, oneFrameApiProgramMocked)
   }
 }

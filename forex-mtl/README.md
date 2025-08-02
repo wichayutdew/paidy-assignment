@@ -12,8 +12,8 @@
 
 ```bash
 cd forex-mtl
-export ONE_FRAME_TOKEN=${ONE_FRAME_TOKEN} # Set your One Frame API token here
 export VAULT_TOKEN=${VAULT_TOKEN} # Set your Vault token here
+export ONE_FRAME_TOKEN=${ONE_FRAME_TOKEN} # Set your One Frame API token here
 export REDIS_TOKEN=${REDIS_TOKEN} # Set your Redis password here
 docker compose -f external-dependencies.yml up -d
 sbt run

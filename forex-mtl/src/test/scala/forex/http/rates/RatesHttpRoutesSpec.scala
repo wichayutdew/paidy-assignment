@@ -75,7 +75,7 @@ class RatesHttpRoutesSpec extends AnyWordSpec with Matchers with MockitoSugar wi
           response.status shouldBe BadGateway
           val bodyIO: IO[String] = response.as[String]
           whenReady(bodyIO.unsafeToFuture()) { body =>
-            body shouldBe "Service unavailable"
+            body shouldBe "Unable to lookup exchange rate due to external service failure"
           }
         }
       }
@@ -92,7 +92,7 @@ class RatesHttpRoutesSpec extends AnyWordSpec with Matchers with MockitoSugar wi
           response.status shouldBe UnprocessableEntity
           val bodyIO: IO[String] = response.as[String]
           whenReady(bodyIO.unsafeToFuture()) { body =>
-            body shouldBe "Failed to parse date: invalid-date"
+            body shouldBe "Unable to decode response from external service"
           }
         }
       }

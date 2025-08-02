@@ -6,7 +6,7 @@ import cats.data.ValidatedNel
 import cats.effect.Sync
 import cats.syntax.flatMap._
 import forex.domain.core.BaseError
-import forex.domain.rates.Constant.{ PATH, QUERY_PARAMETER }
+import forex.domain.core.Constant.{ PATH, QUERY_PARAMETER }
 import forex.domain.rates.Currency
 import forex.programs.RatesProgram
 import forex.programs.rates.errors.{ Error => ProgramError }
@@ -50,8 +50,10 @@ class RatesHttpRoutes[F[_]: Sync](rates: RatesProgram[F]) extends Http4sDsl[F] {
   private def toHttpError(error: BaseError): F[Response[F]] =
     error match {
       case ProgramError.ExchangeRateNotFound(pair) => NotFound(s"Exchange rate $pair is not found")
-      case ProgramError.RateLookupFailed(error)    => BadGateway(error)
-      case ProgramError.DecodingFailure(error)     => UnprocessableEntity(error)
+      case ProgramError.RateLookupFailed(_)        =>
+        BadGateway("Unable to lookup exchange rate due to external service failure")
+      case ProgramError.DecodingFailure(_) => UnprocessableEntity("Unable to decode response from external service")
+      case _                               => InternalServerError("An unexpected error occurred")
     }
 
   val routes: HttpRoutes[F] = Router(

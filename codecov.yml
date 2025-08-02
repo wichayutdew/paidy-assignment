@@ -1,0 +1,17 @@
+# See https://docs.codecov.io/docs/codecov-yaml and other doc sections.
+codecov:
+  require_ci_to_pass: true
+
+coverage:
+  precision: 2
+  round: down
+  range: 55...100
+  status:
+    project:
+      default:
+        target: 90%
+    patch:
+      default:
+        only_pulls: true
+        threshold: 0.1%
+        if_not_found: failure
