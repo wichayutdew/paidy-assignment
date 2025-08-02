@@ -44,11 +44,17 @@ jobs:
         with:
           sbt-runner-version: 1.8.0
       - name: Start Forex MTL service
-        run: docker compose -f integration-test.yml up -d
+        run: |
+          cd forex-mtl
+          docker compose -f integration-test.yml up -d
       - name: Check service health
-        run: docker compose -f integration-test.yml ps
+        run: |
+          cd forex-mtl
+          docker compose -f integration-test.yml ps
       - name: Run integration tests
-        run: sbt integrationTest
+        run: |
+          cd forex-mtl
+          sbt integrationTest
       - name: Cleanup
         if: always()
         run: docker compose -f integration-test.yml down -v
