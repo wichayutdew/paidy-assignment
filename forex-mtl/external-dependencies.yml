@@ -4,6 +4,8 @@ services:
     restart: always
     ports:
       - "8080:8080"
+    networks:
+      - app-network
   vault:
     image: hashicorp/vault
     restart: always
@@ -23,6 +25,8 @@ services:
     volumes:
       - ./vault-entrypoint.sh:/vault-entrypoint.sh
     entrypoint: [ "/vault-entrypoint.sh" ]
+    networks:
+      - app-network
   redis:
     image: redis:latest
     restart: always
@@ -34,3 +38,9 @@ services:
       timeout: 3s
       retries: 5
     command: [ "redis-server", "--requirepass", "${REDIS_TOKEN}" ]
+    networks:
+      - app-network
+
+networks:
+  app-network:
+    driver: bridge

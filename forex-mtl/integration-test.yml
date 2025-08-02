@@ -1,0 +1,48 @@
+services:
+  forex-app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8090:8090"
+    depends_on:
+      one-frame:
+        condition: service_started
+      vault:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      VAULT_TOKEN: "${VAULT_TOKEN}"
+      JAVA_OPTS: >-
+        -Xmx512m
+        -Xms256m
+        -XX:+UseG1GC
+        -XX:+UseContainerSupport
+        -Dconfig.file=/app/conf/integration-test.conf
+        -Dlogback.configurationFile=/app/conf/logback.xml
+    networks:
+      - app-network
+    volumes:
+      - ./logs:/app/logs
+      - ./src/main/resources:/app/conf:ro
+    restart: always
+  one-frame:
+    extends:
+      file: external-dependencies.yml
+      service: one-frame
+  vault:
+    extends:
+      file: external-dependencies.yml
+      service: vault
+  redis:
+    extends:
+      file: external-dependencies.yml
+      service: redis
+
+networks:
+  app-network:
+    driver: bridge
+
+volumes:
+  logs:
