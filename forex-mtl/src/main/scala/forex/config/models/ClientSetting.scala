@@ -22,5 +22,5 @@ final case class VaultConfig(
 final case class RedisConfig(
     host: String,
     port: Int,
-    connectionTimeout: FiniteDuration,
+    connectionTimeout: FiniteDuration
 ) extends GenericHttpConfig
