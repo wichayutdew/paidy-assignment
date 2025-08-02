@@ -14,12 +14,12 @@ message and the PR title will follow Semantic convention.
   type of change you made
 
 > - feat: (new feature for the user, not a new feature for build script)
->   - fix: (bug fix for the user, not a fix to a build script)
->   - docs: (changes to the documentation)
->   - style: (formatting; no production code change)
->   - refactor: (refactoring production code, eg. renaming a variable)
->   - test: (adding missing tests, refactoring tests; no production code change)
->   - chore: (updating grunt tasks e.g. update CI/CD, Docker runner, etc; no production code change)
+> - fix: (bug fix for the user, not a fix to a build script)
+> - docs: (changes to the documentation)
+> - style: (formatting; no production code change)
+> - refactor: (refactoring production code, eg. renaming a variable)
+> - test: (adding missing tests, refactoring tests; no production code change)
+> - chore: (updating grunt tasks e.g. update CI/CD, Docker runner, etc; no production code change)
 
 # Overview
 
@@ -135,6 +135,15 @@ message and the PR title will follow Semantic convention.
    Currencies there will be 36*2 = 72 possible pairs.
    > With this cache preparation, for first 5 minutes, after the service is booted, we will be able to save multiple
    requests to One Frame API.
+2. Initially thought of refreshing entire cache on every api call but decide not to implement.
+   > At first, I thought of refreshing all the rates cacehe on every API call.
+   > But then I realized that on a production environment, the respone time on One Frame API might be worse if we fetch
+   all the 72 pairs at once.
+   > That's why I decide to not implement it and just fetch only the requested pair to keep latency low.
+   >
+   > But thing will change if we are able to get to know logic behind One Frame API and turns our fetching all the rates
+   at once wouldn't increase the latency by a lot.
+   > In that case, this will benefit the Forex service's latency by a lot.
 
 ### Caveat
 
@@ -156,17 +165,29 @@ message and the PR title will follow Semantic convention.
 
 > To ensure the service connects to the One Frame API and Redis external cache correctly
 
+### Assumptions
+
+1. We rely a lot on circe encoder/decoder to do serialization of OneFrame API response and Redis caching.
+   > This might ends up in failure loop in case OneFrame API decides to change their response format or Redis somehow
+   saving cache in wrong format.
+   > Unit/Integration/E2E test will at least confirm that the 2nd scenario where redis is not saving cache correctly
+   will not be happening.
+   > But anyway we cannot really do fool-proofing against the first scenario, so we will just have to monitor the
+   service and fix it when it happens.
+
 ## Send a server metric to Prometheus
 
 > To have a monitoring system to monitor the service's non-functional requirements
 
-## Build E2E Load Tests
+## [Extras] Load test
 
 > To ensure the service can handle 10,000 successful requests per day
 
 ## [Optional] Code Refactoring/Cleanup
 
 > In case there is any code that can be improved or cleaned up
+1. convert returned timestamp to be in server timezone
+   > this will be helpful for internal service within company in same DC to avoid timezone conversion issues
 
 ## Idea
 
@@ -175,5 +196,5 @@ message and the PR title will follow Semantic convention.
    against the functional programming paradigm, so I'll leave it as an optional task
 3. Hide sensitive error message from user
 4. create DOCKERFILE to allow service to run in production, split application config into `common` - qa,prod,local,test
-5. update timestamp returned to be in server timezone, this will be helpful for internal service within company in same
-   DC to avoid timezone conversion issues
+5. create cache invalidate endpoint behind authentication to allow internal user to invalidate the cache easily. In
+   case, we need to promptly update the token from vault, or there's some wrong exchange data 
