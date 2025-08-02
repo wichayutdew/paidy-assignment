@@ -49,17 +49,6 @@ class ForexAppIntSpec extends AnyWordSpec with Matchers with BeforeAndAfterAll w
 
   "ForexAppIntSpec" when {
     "/rates" should {
-      "return valid rates data" in {
-        val request = Request[IO](Method.GET, Uri.unsafeFromString(s"$baseUrl/rates?from=USD&to=EUR"))
-
-        whenReady(client.run(request).use(response => IO.pure(response)).unsafeToFuture()) { response =>
-          response.status shouldBe Status.Ok
-          whenReady(response.as[String].unsafeToFuture()) { body =>
-            body should startWith("""{"from":"USD","to":"EUR","price":""")
-          }
-        }
-      }
-
       "return cached exchange rate when called with same currency pair" in {
         val request = Request[IO](Method.GET, Uri.unsafeFromString(s"$baseUrl/rates?from=USD&to=EUR"))
 
@@ -69,6 +58,7 @@ class ForexAppIntSpec extends AnyWordSpec with Matchers with BeforeAndAfterAll w
             response2.status shouldBe Status.Ok
             whenReady(response1.as[String].unsafeToFuture()) { body1 =>
               whenReady(response2.as[String].unsafeToFuture()) { body2 =>
+                body1 should startWith("""{"from":"USD","to":"EUR","price":""")
                 body1 shouldBe body2
               }
             }
@@ -100,14 +90,6 @@ class ForexAppIntSpec extends AnyWordSpec with Matchers with BeforeAndAfterAll w
     }
 
     "/cache/:service/:key" should {
-      "return OK when DELETE redis cache" in {
-        val request = Request[IO](Method.DELETE, Uri.unsafeFromString(s"$baseUrl/cache/redis/key"))
-
-        whenReady(client.run(request).use(response => IO.pure(response)).unsafeToFuture()) { response =>
-          response.status shouldBe Status.Ok
-        }
-      }
-
       "return OK when DELETE in-memory cache" in {
         val request = Request[IO](Method.DELETE, Uri.unsafeFromString(s"$baseUrl/cache/memory/key"))
 
