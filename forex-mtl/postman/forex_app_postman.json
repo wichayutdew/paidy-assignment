@@ -1,0 +1,150 @@
+{
+	"info": {
+		"_postman_id": "ed28e190-4d3b-434e-a964-bf413eaa95bb",
+		"name": "Forex",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "25846486"
+	},
+	"item": [
+		{
+			"name": "Forex App",
+			"item": [
+				{
+					"name": "redis cache invalidation",
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{forex}}/cache/redis/{{cache_name}}",
+							"host": [
+								"{{forex}}"
+							],
+							"path": [
+								"cache",
+								"redis",
+								"{{cache_name}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "in-memory cache invalidation",
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{forex}}/cache/memory/{{cache_name}}",
+							"host": [
+								"{{forex}}"
+							],
+							"path": [
+								"cache",
+								"memory",
+								"{{cache_name}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Exchange Rates",
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{forex}}/rates?from=EUR&to=USD",
+							"host": [
+								"{{forex}}"
+							],
+							"path": [
+								"rates"
+							],
+							"query": [
+								{
+									"key": "from",
+									"value": "EUR"
+								},
+								{
+									"key": "to",
+									"value": "USD"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Healthcheck",
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{forex}}/health",
+							"host": [
+								"{{forex}}"
+							],
+							"path": [
+								"health"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "One Frame API",
+			"item": [
+				{
+					"name": "rates",
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "GET",
+						"header": [
+							{
+								"key": "token",
+								"value": "{{one-frame-token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{one-frame}}/rates?pair=USDJPY&pair=JPYUSD",
+							"host": [
+								"{{one-frame}}"
+							],
+							"path": [
+								"rates"
+							],
+							"query": [
+								{
+									"key": "pair",
+									"value": "USDJPY"
+								},
+								{
+									"key": "pair",
+									"value": "JPYUSD"
+								}
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		}
+	]
+}

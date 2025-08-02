@@ -1,0 +1,33 @@
+{
+	"id": "6709ab53-2004-47a2-9780-d7557db3fd81",
+	"name": "Local",
+	"values": [
+		{
+			"key": "forex",
+			"value": "http://localhost:8090",
+			"type": "default",
+			"enabled": true
+		},
+		{
+			"key": "one-frame",
+			"value": "http://localhost:8080",
+			"type": "default",
+			"enabled": true
+		},
+		{
+			"key": "one-frame-token",
+			"value": "10dc303535874aeccc86a8251e6992f5",
+			"type": "secret",
+			"enabled": true
+		},
+		{
+			"key": "cache_name",
+			"value": "rates_EURUSD",
+			"type": "default",
+			"enabled": true
+		}
+	],
+	"_postman_variable_scope": "environment",
+	"_postman_exported_at": "2025-08-02T11:10:03.236Z",
+	"_postman_exported_using": "Postman/11.56.4"
+}
