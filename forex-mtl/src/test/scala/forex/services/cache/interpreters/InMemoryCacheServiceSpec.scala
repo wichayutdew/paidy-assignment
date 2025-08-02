@@ -9,12 +9,6 @@ import scala.concurrent.duration.{ FiniteDuration, SECONDS }
 class InMemoryCacheServiceSpec extends AnyWordSpec with Matchers with ScalaFutures {
   "InMemoryCacheService" when {
     "get" should {
-      "return None if key is not exists" in new Fixture {
-        whenReady(service.get("key").unsafeToFuture()) { result =>
-          result shouldBe None
-        }
-      }
-
       "return value if key exists" in new Fixture {
         service.set("key", "value", FiniteDuration(10, SECONDS))
         whenReady(service.get("key").unsafeToFuture()) { result =>
@@ -24,6 +18,12 @@ class InMemoryCacheServiceSpec extends AnyWordSpec with Matchers with ScalaFutur
 
       "return None if cache is expired" in new Fixture {
         service.set("key", "value", FiniteDuration(0, SECONDS))
+        whenReady(service.get("key").unsafeToFuture()) { result =>
+          result shouldBe None
+        }
+      }
+
+      "return None if key is not exists" in new Fixture {
         whenReady(service.get("key").unsafeToFuture()) { result =>
           result shouldBe None
         }
