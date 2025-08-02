@@ -144,6 +144,9 @@ message and the PR title will follow Semantic convention.
    > But thing will change if we are able to get to know logic behind One Frame API and turns our fetching all the rates
    at once wouldn't increase the latency by a lot.
    > In that case, this will benefit the Forex service's latency by a lot.
+3. Fetch Redis token (password) once during service's startup
+   > As redis token (password) is required during client creation, unlike One Frame API token where it's needs during
+   API call.
 
 ### Caveat
 
@@ -186,15 +189,20 @@ message and the PR title will follow Semantic convention.
 ## [Optional] Code Refactoring/Cleanup
 
 > In case there is any code that can be improved or cleaned up
+
 1. convert returned timestamp to be in server timezone
    > this will be helpful for internal service within company in same DC to avoid timezone conversion issues
+2. Hide sensitive error message from user
+   > Error messages is often hold sensitive information, exposing it as-is in HTTP layer is not a good practice.
 
-## Idea
+### Idea
 
-1. make generic HTTP client and Server Route
-2. convert Error to GenericServerError so we don't need to handle error transformation in every service -- this goes
-   against the functional programming paradigm, so I'll leave it as an optional task
-3. Hide sensitive error message from user
-4. create DOCKERFILE to allow service to run in production, split application config into `common` - qa,prod,local,test
-5. create cache invalidate endpoint behind authentication to allow internal user to invalidate the cache easily. In
-   case, we need to promptly update the token from vault, or there's some wrong exchange data 
+- make generic HTTP client and Server Route
+- create DOCKERFILE to allow service to run in production, split application config into `common` - qa,prod,local,test
+- create cache invalidate endpoint behind authentication to allow internal user to invalidate the cache easily. In
+  case, we need to promptly update the token from vault, or there's some wrong exchange data
+
+### Rejected Idea(s)
+
+1. convert All Errors to SingleGenericServerError so we don't need to handle error transformation in every service
+   > against the functional programming paradigm, decided to not implement it
