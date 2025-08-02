@@ -164,9 +164,14 @@ message and the PR title will follow Semantic convention.
    > But anyway, before we reach that point, we need to at least have some supporting data to show that it's not
    physically possible to satisfy the requirement. That's leads to the next 2 task that I'll implement. Prometheus
 
-## Build Integration Tests
+## Build Integration/E2E Tests
 
-> To ensure the service connects to the One Frame API and Redis external cache correctly
+> To ensure the service connects to the One Frame API, Vault, and Redis external cache correctly and returns result as expected.
+- Create integration test stack using docker-compose container to run Forex app, One Frame API, Vault, and Redis. 
+  And use Scalatest to try hit to /rates endpoint to ensure all the scenarios
+
+### Caveat
+1. cannot do healthcheck while spinning up One Frame API due to lacks of healthcheck endpoint
 
 ### Assumptions
 
@@ -198,7 +203,6 @@ message and the PR title will follow Semantic convention.
 ### Idea
 
 - make generic HTTP client and Server Route
-- create DOCKERFILE to allow service to run in production, split application config into `common` - qa,prod,local,test
 - create cache invalidate endpoint behind authentication to allow internal user to invalidate the cache easily. In
   case, we need to promptly update the token from vault, or there's some wrong exchange data
 
