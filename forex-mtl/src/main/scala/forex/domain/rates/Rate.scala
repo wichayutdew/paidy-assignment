@@ -4,6 +4,8 @@ import forex.domain.oneframe.RateDTO
 import io.circe.{ Decoder, Encoder }
 import io.circe.generic.semiauto.{ deriveDecoder, deriveEncoder }
 
+import java.time.ZoneId
+
 final case class Rate(
     pair: Pair,
     price: Price,
@@ -15,7 +17,7 @@ object Rate {
     Rate(
       pair = Pair(dto.from, dto.to),
       price = Price(dto.price),
-      timestamp = Timestamp(dto.timestamp)
+      timestamp = Timestamp(dto.timestamp.atZoneSameInstant(ZoneId.systemDefault()).toOffsetDateTime)
     )
 
   implicit val rateDecoder: Decoder[Rate] = deriveDecoder[Rate]
