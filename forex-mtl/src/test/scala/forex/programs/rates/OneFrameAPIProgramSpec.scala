@@ -1,5 +1,6 @@
 package forex.programs.rates
 import cats.effect.IO
+import com.typesafe.scalalogging.Logger
 import forex.domain.rates.{ Currency, Pair }
 import forex.helper.MockedObject
 import forex.services.RatesService
@@ -7,10 +8,12 @@ import forex.services.cache.interpreters.RedisService
 import forex.services.rates.errors.{ Error => ServiceError }
 import forex.programs.rates.errors.{ Error => ProgramError }
 import io.circe.syntax.EncoderOps
+import org.mockito.Mockito.lenient
 import org.mockito.scalatest.MockitoSugar
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
+import org.slf4j.{ Logger => Slf4jLogger }
 
 import scala.concurrent.duration.FiniteDuration
 
@@ -24,6 +27,7 @@ class OneFrameAPIProgramSpec extends AnyWordSpec with Matchers with MockitoSugar
           response shouldBe Right(mockedRate)
           verify(ratesServiceMock).get(any[List[Pair]], any[String])
           verifyZeroInteractions(redisServiceMock)
+          verifyZeroInteractions(loggerMock)
         }
       }
 
@@ -34,6 +38,7 @@ class OneFrameAPIProgramSpec extends AnyWordSpec with Matchers with MockitoSugar
           response shouldBe Left(ProgramError.ExchangeRateNotFound(s"${mockedRate.pair.from} to ${mockedRate.pair.to}"))
           verify(ratesServiceMock).get(any[List[Pair]], any[String])
           verifyZeroInteractions(redisServiceMock)
+          verify(loggerMock).error(any[String])
         }
       }
 
@@ -45,6 +50,7 @@ class OneFrameAPIProgramSpec extends AnyWordSpec with Matchers with MockitoSugar
           response shouldBe Left(ProgramError.RateLookupFailed("failed"))
           verify(ratesServiceMock).get(any[List[Pair]], any[String])
           verifyZeroInteractions(redisServiceMock)
+          verifyZeroInteractions(loggerMock)
         }
       }
     }
@@ -61,6 +67,7 @@ class OneFrameAPIProgramSpec extends AnyWordSpec with Matchers with MockitoSugar
           response shouldBe Right(mockedRate)
           verify(redisServiceMock).get(any[String])
           verifyZeroInteractions(ratesServiceMock)
+          verifyZeroInteractions(loggerMock)
         }
       }
 
@@ -76,6 +83,7 @@ class OneFrameAPIProgramSpec extends AnyWordSpec with Matchers with MockitoSugar
           response.left.toOption.get shouldBe a[ProgramError.DecodingFailure]
           verify(redisServiceMock).get(any[String])
           verifyZeroInteractions(ratesServiceMock)
+          verify(loggerMock).error(any[String], any[Throwable])
         }
       }
 
@@ -93,6 +101,7 @@ class OneFrameAPIProgramSpec extends AnyWordSpec with Matchers with MockitoSugar
           verify(redisServiceMock).get(any[String])
           verify(ratesServiceMock).get(any[List[Pair]], any[String])
           verify(redisServiceMock).set(any[String], any[String], any[FiniteDuration])
+          verify(loggerMock).error(any[String])
         }
       }
 
@@ -109,6 +118,7 @@ class OneFrameAPIProgramSpec extends AnyWordSpec with Matchers with MockitoSugar
           verify(redisServiceMock).get(any[String])
           verify(ratesServiceMock).get(any[List[Pair]], any[String])
           verify(redisServiceMock).set(any[String], any[String], any[FiniteDuration])
+          verifyZeroInteractions(loggerMock)
         }
       }
 
@@ -126,6 +136,7 @@ class OneFrameAPIProgramSpec extends AnyWordSpec with Matchers with MockitoSugar
           verify(redisServiceMock).get(any[String])
           verify(ratesServiceMock).get(any[List[Pair]], any[String])
           verifyNoMoreInteractions(redisServiceMock)
+          verifyZeroInteractions(loggerMock)
         }
       }
 
@@ -154,10 +165,15 @@ class OneFrameAPIProgramSpec extends AnyWordSpec with Matchers with MockitoSugar
     val ratesServiceMock: RatesService[IO] = mock[RatesService[IO]]
     val redisServiceMock: RedisService[IO] = mock[RedisService[IO]]
 
+    val loggerMock: Slf4jLogger = mock[Slf4jLogger]
+    lenient().when(loggerMock.isErrorEnabled()).thenReturn(true)
+
     def program(enableCache: Boolean = false): OneFrameAPIProgram[IO] = new OneFrameAPIProgram[IO](
       ratesServiceMock,
       redisServiceMock,
       mockedApplicationConfig.cache.rates.copy(enabled = enableCache)
-    )
+    ) {
+      override lazy val logger: Logger = Logger(loggerMock)
+    }
   }
 }

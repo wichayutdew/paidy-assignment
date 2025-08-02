@@ -1,11 +1,14 @@
 package forex.services.cache.interpreters
 import cats.effect.IO
+import com.typesafe.scalalogging.Logger
 import io.lettuce.core.SetArgs
 import io.lettuce.core.api.sync.RedisCommands
+import org.mockito.Mockito.{ lenient, verifyNoInteractions }
 import org.mockito.scalatest.MockitoSugar
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
+import org.slf4j.{ Logger => Slf4jLogger }
 
 import scala.concurrent.duration.{ FiniteDuration, SECONDS }
 
@@ -18,6 +21,25 @@ class RedisServiceSpec extends AnyWordSpec with Matchers with MockitoSugar with 
         redisService.set("key", "value", FiniteDuration(30, SECONDS))
 
         verify(redisClientMocked).set(any[String], any[String], any[SetArgs])
+        verifyNoInteractions(loggerMock)
+      }
+
+      "log warn when set unsuccessfully" in new Fixture {
+        when(redisClientMocked.set(any[String], any[String], any[SetArgs])).thenReturn("invalid")
+
+        redisService.set("key", "value", FiniteDuration(30, SECONDS))
+
+        verify(redisClientMocked).set(any[String], any[String], any[SetArgs])
+        verify(loggerMock).warn(any[String])
+      }
+
+      "log error when set error" in new Fixture {
+        when(redisClientMocked.set(any[String], any[String], any[SetArgs])).thenThrow(new Exception("error"))
+
+        redisService.set("key", "value", FiniteDuration(30, SECONDS))
+
+        verify(redisClientMocked).set(any[String], any[String], any[SetArgs])
+        verify(loggerMock).error(any[String], any[Throwable])
       }
     }
 
@@ -27,6 +49,7 @@ class RedisServiceSpec extends AnyWordSpec with Matchers with MockitoSugar with 
 
         whenReady(redisService.get("key").unsafeToFuture()) { response =>
           response shouldBe Some("result")
+          verifyNoInteractions(loggerMock)
         }
       }
 
@@ -35,6 +58,7 @@ class RedisServiceSpec extends AnyWordSpec with Matchers with MockitoSugar with 
 
         whenReady(redisService.get("key").unsafeToFuture()) { response =>
           response shouldBe None
+          verify(loggerMock).warn(any[String])
         }
       }
 
@@ -43,6 +67,7 @@ class RedisServiceSpec extends AnyWordSpec with Matchers with MockitoSugar with 
 
         whenReady(redisService.get("key").unsafeToFuture()) { response =>
           response shouldBe None
+          verify(loggerMock).error(any[String], any[Throwable])
         }
       }
     }
@@ -55,11 +80,36 @@ class RedisServiceSpec extends AnyWordSpec with Matchers with MockitoSugar with 
 
         verify(redisClientMocked).del(any[String])
       }
+
+      "log warn when delete un successfully" in new Fixture {
+        when(redisClientMocked.del(any[String])).thenReturn(0L)
+
+        redisService.delete("key")
+
+        verify(redisClientMocked).del(any[String])
+        verify(loggerMock).warn(any[String])
+      }
+
+      "log error when delete error" in new Fixture {
+        when(redisClientMocked.del(any[String])).thenThrow(new Exception("error"))
+
+        redisService.delete("key")
+
+        verify(redisClientMocked).del(any[String])
+        verify(loggerMock).error(any[String], any[Throwable])
+      }
     }
   }
 
   trait Fixture {
+    val loggerMock: Slf4jLogger = mock[Slf4jLogger]
+
+    lenient().when(loggerMock.isWarnEnabled()).thenReturn(true)
+    lenient().when(loggerMock.isErrorEnabled()).thenReturn(true)
+
     val redisClientMocked: RedisCommands[String, String] = mock[RedisCommands[String, String]]
-    val redisService                                     = new RedisService[IO](redisClientMocked)
+    val redisService: RedisService[IO]                   = new RedisService[IO](redisClientMocked) {
+      override lazy val logger: Logger = Logger(loggerMock)
+    }
   }
 }

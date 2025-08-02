@@ -4,6 +4,7 @@ import cats.Monad
 import cats.data.EitherT
 import cats.implicits.{ toFlatMapOps, toFunctorOps }
 import forex.config.models.CacheConfig
+import forex.domain.core.measurement.logging.{ AppLogger, ErrorLog }
 import forex.domain.rates.{ Currency, Pair, Rate }
 import forex.programs.rates.errors.Error.DecodingFailure
 import forex.programs.rates.errors.{ toProgramError, Error }
@@ -16,7 +17,7 @@ class OneFrameAPIProgram[F[_]: Monad](
     ratesService: RatesService[F],
     redisService: RedisService[F],
     ratesCacheConfig: CacheConfig
-) {
+) extends AppLogger {
   def preFetch(token: String): F[Unit] =
     if (ratesCacheConfig.enabled) fetchRates(Currency.getAllPairs, token).void else Monad[F].pure(())
 
@@ -32,7 +33,9 @@ class OneFrameAPIProgram[F[_]: Monad](
   private def fromJsonString(rateString: String): F[Error Either Rate] =
     decode[Rate](rateString) match {
       case Right(rate) => Monad[F].pure(Right(rate))
-      case Left(error) => Monad[F].pure(Left(DecodingFailure(error.getMessage)))
+      case Left(error) =>
+        logger.log(ErrorLog("[Redis] cache saved is in invalid format", Some(error)))
+        Monad[F].pure(Left(DecodingFailure(error.getMessage)))
     }
 
   private def findRate(pair: Pair, ratesF: F[Error Either List[Rate]]): F[Error Either Rate] =
@@ -42,7 +45,10 @@ class OneFrameAPIProgram[F[_]: Monad](
           rates
             .find(_.pair == pair)
             .map(Right(_))
-            .getOrElse(Left(Error.ExchangeRateNotFound(s"${pair.from} to ${pair.to}")))
+            .getOrElse {
+              logger.log(ErrorLog(s"[One Frame API] response returned mismatched with requested data", None))
+              Left(Error.ExchangeRateNotFound(s"${pair.from} to ${pair.to}"))
+            }
         )
       case Left(error) => Monad[F].pure(Left(error))
     }

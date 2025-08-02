@@ -3,6 +3,7 @@ package forex.services.rates.interpreters
 import cats.effect.Sync
 import cats.implicits.{ catsSyntaxApplicativeError, toFlatMapOps, toFunctorOps }
 import forex.config.models.OneFrameConfig
+import forex.domain.core.measurement.logging.{ AppLogger, ErrorLog }
 import forex.domain.oneframe.Constant.{ HEADER, PATH, QUERY_PARAMETER }
 import forex.domain.oneframe.RateDTO
 import forex.domain.rates.{ Pair, Rate }
@@ -16,7 +17,7 @@ import org.http4s.circe.jsonOf
 import org.http4s.client.Client
 import org.typelevel.ci.CIString
 
-class OneFrameService[F[_]: Sync](client: Client[F], config: OneFrameConfig) extends Algebra[F] {
+class OneFrameService[F[_]: Sync](client: Client[F], config: OneFrameConfig) extends Algebra[F] with AppLogger {
   implicit val rateListEntityDecoder: EntityDecoder[F, List[RateDTO]] = jsonOf[F, List[RateDTO]]
 
   private val baseUri = Uri(
@@ -46,12 +47,16 @@ class OneFrameService[F[_]: Sync](client: Client[F], config: OneFrameConfig) ext
         case _ =>
           response
             .as[String]
-            .map(errorMsg => Left(OneFrameLookupFailed(errorMsg)): Error Either List[RateDTO])
+            .map { errorMsg =>
+              logger.log(ErrorLog(s"[One Frame API] $errorMsg", None))
+              Left(OneFrameLookupFailed(errorMsg)): Error Either List[RateDTO]
+            }
       }).handleErrorWith { error =>
         val errorMsg = error match {
-          case e: DecodeFailure => s"Failed to decode response: ${e.getMessage}"
-          case e                => s"Unexpected error: ${e.getMessage}"
+          case _: DecodeFailure => s"Failed to decode response"
+          case _                => s"Unexpected error"
         }
+        logger.log(ErrorLog(errorMsg, Some(error)))
         Sync[F].pure(Left(DecodingFailure(errorMsg)))
       }
     }
