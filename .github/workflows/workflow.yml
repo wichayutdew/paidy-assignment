@@ -44,6 +44,10 @@ jobs:
         with:
           sbt-runner-version: 1.8.0
       - name: Start Forex MTL service
+        env:
+          ONE_FRAME_TOKEN: ${{ secrets.ONE_FRAME_TOKEN }}
+          VAULT_TOKEN: "random-vault-token"
+          REDIS_TOKEN: "random-redis-token"
         run: |
           cd forex-mtl
           docker compose -f integration-test.yml up -d
