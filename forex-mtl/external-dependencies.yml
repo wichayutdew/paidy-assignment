@@ -41,7 +41,14 @@ services:
     command: [ "redis-server", "--requirepass", "${REDIS_TOKEN}" ]
     networks:
       - app-network
-
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: prometheus
+    restart: always
+    ports:
+      - "9090:9090"
+    networks:
+      - app-network
 networks:
   app-network:
     driver: bridge
