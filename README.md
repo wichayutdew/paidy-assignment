@@ -164,7 +164,7 @@ message and the PR title will follow Semantic convention.
    > But anyway, before we reach that point, we need to at least have some supporting data to show that it's not
    physically possible to satisfy the requirement. That's leads to the next 2 task that I'll implement. Prometheus
 
-## Build Integration/E2E Tests
+## [Build Integration/E2E Tests](https://github.com/wichayutdew/paidy-assignment/pull/12)
 
 > To ensure the service connects to the One Frame API, Vault, and Redis external cache correctly
 > and returns result as expected.
