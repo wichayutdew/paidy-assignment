@@ -1,10 +1,12 @@
 # Forex-MTL
 
 ## Pre-requisites
+
 - Make sure you have the following installed on your machine either globally or in IDE:
-  - __SBT 1.8.0__
-  - __Java 17__ - _Preferably Azul Zulu, as I experienced the least side effects with it. compared to OpenJDK, Amazon Corretto, etc._
-  - Docker installed and running - _to run all external dependencies e.g. One Frame API, Redis, etc._
+    - __SBT 1.8.0__
+    - __Java 17__ - _Preferably Azul Zulu, as I experienced the least side effects with it. compared to OpenJDK, Amazon
+      Corretto, etc._
+    - Docker installed and running - _to run all external dependencies e.g. One Frame API, Redis, etc._
 
 ## Running the project locally
 
@@ -19,7 +21,20 @@ docker compose -f external-dependencies.yml up -d
 sbt run
 ```
 
+## running Integration tests
+- Forex app will be built using Dockerfile and put into compose container and test will run against it
+
+```bash
+cd forex-mtl
+export VAULT_TOKEN=${VAULT_TOKEN} # Set your Vault token here
+export ONE_FRAME_TOKEN=${ONE_FRAME_TOKEN} # Set your One Frame API token here
+export REDIS_TOKEN=${REDIS_TOKEN} # Set your Redis password here
+docker compose -f integration-test.yml up -d
+sbt integrationTest
+```
+
 ## useful SBT commands
+
 ```bash
 sbt clean ## Clean up all the generated files to prevent unexpected behavior
 

@@ -70,10 +70,24 @@ libraryDependencies ++= Seq(
   Libraries.scalaTest        % Test,
   Libraries.scalaCheck       % Test,
   Libraries.catsScalaCheck   % Test,
-  Libraries.mockitoScalaTest % Test
+  Libraries.mockitoScalaTest % Test,
+  Libraries.scalaTest        % IntegrationTest
 )
 
 ThisBuild / coverageExcludedFiles := Seq(
   ".*Main.*",
   ".*Module.*"
 ).mkString("|")
+
+lazy val root            = (project in file("."))
+  .configs(IntegrationTest)
+  .settings(
+    inConfig(IntegrationTest)(Defaults.testSettings),
+    IntegrationTest / scalaSource := baseDirectory.value / "src" / "testFixture" / "scala",
+    IntegrationTest / resourceDirectory := baseDirectory.value / "src" / "testFixture" / "resources",
+    Test / testOptions := Seq(Tests.Filter(unitTestFilter)),
+    IntegrationTest / testOptions := Seq(Tests.Filter(integrationTestFilter)),
+    addCommandAlias("integrationTest", "IntegrationTest/test")
+  )
+def integrationTestFilter(name: String): Boolean = name endsWith "IntSpec"
+def unitTestFilter(name: String): Boolean        = !integrationTestFilter(name)
