@@ -23,5 +23,4 @@ final case class RedisConfig(
     host: String,
     port: Int,
     connectionTimeout: FiniteDuration,
-    token: String
 ) extends GenericHttpConfig
