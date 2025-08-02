@@ -3,9 +3,11 @@ package forex
 import cats.data.EitherT
 import cats.effect.{ Concurrent, ConcurrentEffect, Resource, Timer }
 import cats.implicits.toFunctorOps
+import cats.syntax.semigroupk._
 import com.bettercloud.vault.{ Vault, VaultConfig }
 import forex.config.models.ApplicationConfig
 import forex.domain.vault.Constant
+import forex.http.healthCheck.HealthCheckHttpRoutes
 import forex.http.rates.RatesHttpRoutes
 import forex.programs._
 import forex.programs.rates.{ OneFrameAPIProgram, OneFrameTokenProgram }
@@ -47,13 +49,16 @@ class Module[F[_]: ConcurrentEffect: Timer](
     RatesProgram[F](oneFrameTokenProgram, oneFrameApiProgram)
 
   /* ------------------------------ SERVER ------------------------------ */
-  private val ratesHttpRoutes: HttpRoutes[F] = new RatesHttpRoutes[F](ratesProgram).routes
+  private val ratesHttpRoutes: HttpRoutes[F]       = new RatesHttpRoutes[F](ratesProgram).routes
+  private val healthCheckHttpRoutes: HttpRoutes[F] = new HealthCheckHttpRoutes[F]().routes
+
   type PartialMiddleware = HttpRoutes[F] => HttpRoutes[F]
   type TotalMiddleware   = HttpApp[F] => HttpApp[F]
   private val routesMiddleware: PartialMiddleware = (http: HttpRoutes[F]) => AutoSlash(http)
   private val appMiddleware: TotalMiddleware      = { http: HttpApp[F] => Timeout(config.server.requestTimeout)(http) }
-  private val http: HttpRoutes[F]                 = ratesHttpRoutes
-  val httpApp: HttpApp[F]                         = appMiddleware(routesMiddleware(http).orNotFound)
+
+  private val allRoutes: HttpRoutes[F] = ratesHttpRoutes <+> healthCheckHttpRoutes
+  val httpApp: HttpApp[F]              = appMiddleware(routesMiddleware(allRoutes).orNotFound)
 }
 
 object Module {

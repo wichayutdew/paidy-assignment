@@ -2,7 +2,8 @@ package forex.domain.rates
 
 object Constant {
   object PATH {
-    val RATES: String = "/rates"
+    val RATES: String        = "/rates"
+    val HEALTH_CHECK: String = "/health"
   }
   object QUERY_PARAMETER {
     val FROM: String = "from"
