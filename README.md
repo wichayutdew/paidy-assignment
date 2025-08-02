@@ -214,6 +214,7 @@ message and the PR title will follow Semantic convention.
 ### Idea
 
 - make generic HTTP client and Server Route
+- handle oneframe API ratelimit error
 
 ### Rejected Idea(s)
 
