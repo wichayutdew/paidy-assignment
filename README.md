@@ -166,11 +166,14 @@ message and the PR title will follow Semantic convention.
 
 ## Build Integration/E2E Tests
 
-> To ensure the service connects to the One Frame API, Vault, and Redis external cache correctly and returns result as expected.
-- Create integration test stack using docker-compose container to run Forex app, One Frame API, Vault, and Redis. 
+> To ensure the service connects to the One Frame API, Vault, and Redis external cache correctly
+> and returns result as expected.
+
+- Create integration test stack using docker-compose container to run Forex app, One Frame API, Vault, and Redis.
   And use Scalatest to try hit to /rates endpoint to ensure all the scenarios
 
 ### Caveat
+
 1. cannot do healthcheck while spinning up One Frame API due to lacks of healthcheck endpoint
 
 ### Assumptions
@@ -199,12 +202,18 @@ message and the PR title will follow Semantic convention.
    > this will be helpful for internal service within company in same DC to avoid timezone conversion issues
 2. Hide sensitive error message from user
    > Error messages is often hold sensitive information, exposing it as-is in HTTP layer is not a good practice.
+3. Create cache invalidate endpoint
+   > This is to allow internal user to invalidate the cache easily in case we need to promptly update the token from
+   vault, or there's some wrong exchange data.
+   >
+   > Decided not to implement the authentication header for this due to same assumption as the service's goal to run in
+   internal cloud network.
+   So, only authorized user within the company can actually hit the endpoint, and there's no impact when the endpoint is
+   called accidentally other than the cache is evicted.
 
 ### Idea
 
 - make generic HTTP client and Server Route
-- create cache invalidate endpoint behind authentication to allow internal user to invalidate the cache easily. In
-  case, we need to promptly update the token from vault, or there's some wrong exchange data
 
 ### Rejected Idea(s)
 
