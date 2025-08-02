@@ -13,7 +13,7 @@ class OneFrameTokenProgram[F[_]: Monad](
     inMemoryCacheService: InMemoryCacheService[F],
     tokenCacheConfig: CacheConfig
 ) {
-  private val cacheKey = s"${tokenCacheConfig.prefix}_${Path.ONE_FRAME}"
+  private val cacheKey = s"${tokenCacheConfig.prefix}_${Path.ONE_FRAME}".replaceAll("/", "_")
 
   def getToken: F[Error Either String] = if (tokenCacheConfig.enabled) {
     inMemoryCacheService.get(cacheKey).flatMap {

@@ -22,7 +22,7 @@ class OneFrameAPIProgram[F[_]: Monad](
 
   def get(pair: Pair, token: String): F[Error Either Rate] =
     if (ratesCacheConfig.enabled) {
-      val cacheKey = s"${ratesCacheConfig.prefix}_${pair.toCacheKey}"
+      val cacheKey = s"${ratesCacheConfig.prefix}_${pair.toCacheKey}".replaceAll("/", "_")
       redisService.get(cacheKey).flatMap {
         case Some(rateString) => fromJsonString(rateString)
         case None             => findRate(pair, fetchRates(List(pair), token))
@@ -51,7 +51,7 @@ class OneFrameAPIProgram[F[_]: Monad](
     rates <- EitherT(ratesService.get(pair, token)).leftMap(toProgramError)
   } yield rates.map { rate =>
     if (ratesCacheConfig.enabled) {
-      val cacheKey = s"${ratesCacheConfig.prefix}_${rate.pair.toCacheKey}"
+      val cacheKey = s"${ratesCacheConfig.prefix}_${rate.pair.toCacheKey}".replaceAll("/", "_")
       redisService.set(cacheKey, rate.asJson.noSpaces, ratesCacheConfig.ttl)
     }
     rate

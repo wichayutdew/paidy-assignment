@@ -1,7 +1,7 @@
 package forex.http.healthCheck
 
 import cats.effect.Sync
-import forex.domain.rates.Constant.PATH
+import forex.domain.core.Constant.PATH
 import org.http4s.HttpRoutes
 import org.http4s.dsl.Http4sDsl
 import org.http4s.server.Router

@@ -6,7 +6,7 @@ import cats.data.ValidatedNel
 import cats.effect.Sync
 import cats.syntax.flatMap._
 import forex.domain.core.BaseError
-import forex.domain.rates.Constant.{ PATH, QUERY_PARAMETER }
+import forex.domain.core.Constant.{ PATH, QUERY_PARAMETER }
 import forex.domain.rates.Currency
 import forex.programs.RatesProgram
 import forex.programs.rates.errors.{ Error => ProgramError }
