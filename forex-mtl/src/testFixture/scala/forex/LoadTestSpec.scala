@@ -70,13 +70,17 @@ class LoadTestSpec extends AnyWordSpec with BeforeAndAfterAll with AppLogger {
     Request[IO](Method.DELETE, Uri.unsafeFromString(s"$baseUrl/cache/redis/rates_$from$to"))
   }
 
+  // decided to give some randomness to cache eviction should be < ~10% of the time
+  private def shouldReplicateCacheEvicted(round: Int): Boolean =
+    random.nextBoolean() && random.nextBoolean() && round % 4 == 0
+
   "LoadTestSpec" should {
     "Call to /rates with random currency pair and randomly evict cache 10,000 times" in
       (0 to 10000).foreach { round =>
         val ratesRequest: Request[IO] = createRandomRequest
         logger.log(InfoLog(s"Round $round: Calling /rates with ${ratesRequest.queryString}"))
         client.run(ratesRequest).use(response => IO.pure(response)).unsafeRunSync()
-        if (random.nextBoolean()) {
+        if (shouldReplicateCacheEvicted(round)) {
           val cacheDeleteRequest = randomlyDeleteCache()
           logger.log(InfoLog(s"Round $round: Cache evicted"))
           client.run(cacheDeleteRequest).use(response => IO.pure(response)).unsafeRunSync()
