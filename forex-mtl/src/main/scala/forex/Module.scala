@@ -17,8 +17,8 @@ import forex.services.cache.interpreters.{ InMemoryCacheService, RedisService }
 import io.lettuce.core.api.StatefulRedisConnection
 import io.lettuce.core.api.sync.RedisCommands
 import io.lettuce.core.{ RedisClient, RedisURI }
+import io.opentelemetry.api.OpenTelemetry
 import io.opentelemetry.api.metrics.Meter
-import io.opentelemetry.sdk.OpenTelemetrySdk
 import io.opentelemetry.sdk.autoconfigure.AutoConfiguredOpenTelemetrySdk
 import org.http4s._
 import org.http4s.blaze.client.BlazeClientBuilder
@@ -72,8 +72,14 @@ class Module[F[_]: ConcurrentEffect: Timer](
 object Module {
   def apply[F[_]: ConcurrentEffect: Timer](config: ApplicationConfig, ec: ExecutionContext): Resource[F, Module[F]] = {
     /* ------------------------------ OBSERVABILITY ------------------------------ */
-    val openTelemetry: OpenTelemetrySdk = AutoConfiguredOpenTelemetrySdk.initialize().getOpenTelemetrySdk
-    implicit val meter: Meter           = openTelemetry.getMeter("forex")
+    val isOtelDisabled =
+      sys.env.getOrElse("OTEL_SDK_DISABLED", sys.props.getOrElse("otel.sdk.disabled", "false")).toBoolean
+
+    val openTelemetry: OpenTelemetry =
+      if (isOtelDisabled) OpenTelemetry.noop()
+      else AutoConfiguredOpenTelemetrySdk.initialize().getOpenTelemetrySdk
+
+    implicit val meter: Meter = openTelemetry.getMeter("forex")
 
     def createRedisClient(password: String): Resource[F, RedisCommands[String, String]] =
       Resource

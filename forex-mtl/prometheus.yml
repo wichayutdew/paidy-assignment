@@ -4,6 +4,6 @@ scrape_configs:
       - targets: [ 'localhost:9090' ]
   - job_name: 'forex-mtl'
     static_configs:
-      - targets: [ 'host.docker.internal:9464' ] ## To allow docker network to hit local machine network
+      - targets: [ 'host.docker.internal:9465' ] ## To allow docker network to hit local machine network
     scrape_interval: 10s
     metrics_path: /metrics

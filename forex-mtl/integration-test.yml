@@ -21,6 +21,7 @@ services:
         -XX:+UseContainerSupport
         -Dconfig.file=/app/conf/integration-test.conf
         -Dlogback.configurationFile=/app/conf/logback.xml
+      OTEL_SDK_DISABLED: true
     networks:
       - app-network
     volumes:
@@ -45,10 +46,6 @@ services:
     extends:
       file: external-dependencies.yml
       service: redis
-  prometheus:
-    extends:
-      file: external-dependencies.yml
-      service: prometheus
 
 networks:
   app-network:
