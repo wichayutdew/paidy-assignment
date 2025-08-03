@@ -25,11 +25,6 @@ sbt run
 
 - Forex app will be built using Dockerfile and put into compose container and test will run against it
 
-## View metrics appended to Prometheus
-
-- Make sure all the external dependencies and the Forex app are running, then you can view the metrics
-  at http://localhost:9090
-
 ```bash
 cd forex-mtl
 export VAULT_TOKEN=${VAULT_TOKEN} # Set your Vault token here
@@ -38,6 +33,11 @@ export REDIS_TOKEN=${REDIS_TOKEN} # Set your Redis password here
 docker compose -f integration-test.yml up -d
 sbt integrationTest
 ```
+
+## View metrics appended to Prometheus
+
+- Make sure all the external dependencies and the Forex app are running, then you can view the metrics
+  at http://localhost:9090
 
 ## useful SBT commands
 
