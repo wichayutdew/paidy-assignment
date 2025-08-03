@@ -36,8 +36,15 @@ class ForexAppIntSpec extends AnyWordSpec with Matchers with BeforeAndAfterAll w
 
     client = clientResource.allocated.unsafeRunSync()._1
 
-    while (Try(client.statusFromString(s"$baseUrl/health").unsafeRunSync().code).getOrElse(-1) != 200)
+    val maxRetries = 30
+    var retries    = 0
+    while (
+      Try(client.statusFromString(s"$baseUrl/health").unsafeRunSync().code).getOrElse(-1) != 200 && retries < maxRetries
+    ) {
       Thread.sleep(1000)
+      retries += 1
+    }
+    if (retries == maxRetries) throw new RuntimeException("App did not start in time")
   }
 
   override def afterAll(): Unit = {
