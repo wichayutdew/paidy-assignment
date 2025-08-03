@@ -88,8 +88,8 @@ lazy val root = (project in file("."))
   .configs(IntegrationTest)
   .enablePlugins(JavaAgent)
   .settings(
-    javaAgents += JavaLibraries.openTelemetryJavaAgent,
-    javaOptions ++= Seq(
+    Compile / run / javaAgents += JavaLibraries.openTelemetryJavaAgent,
+    Compile / run / javaOptions ++= Seq(
       "-Dotel.java.global-autoconfigure.enabled=true",
       "-Dotel.service.name=forex-mtl",
       "-Dotel.metrics.exporter=prometheus",
