@@ -102,6 +102,23 @@
 						}
 					},
 					"response": []
+				},
+				{
+					"name": "Metrics",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{metrics-appender}}/metrics",
+							"host": [
+								"{{metrics-appender}}"
+							],
+							"path": [
+								"metrics"
+							]
+						}
+					},
+					"response": []
 				}
 			]
 		},
