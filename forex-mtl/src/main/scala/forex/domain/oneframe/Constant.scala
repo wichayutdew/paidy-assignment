@@ -10,4 +10,9 @@ object Constant {
   object QUERY_PARAMETER {
     val PAIR: String = "pair"
   }
+
+  object MESSAGE {
+    val RATE_LIMIT = "Quota reached"
+    val FAILED_DECODE = "decoding failure"
+  }
 }

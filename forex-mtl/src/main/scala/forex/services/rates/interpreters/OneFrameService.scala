@@ -1,12 +1,12 @@
 package forex.services.rates.interpreters
 
 import cats.effect.Sync
-import cats.implicits.{ catsSyntaxApplicativeError, toFlatMapOps, toFunctorOps }
+import cats.implicits.{ catsSyntaxApplicativeError, toFlatMapOps }
 import forex.config.models.OneFrameConfig
 import forex.domain.core.measurement.logging.{ AppLogger, ErrorLog }
 import forex.domain.core.measurement.metrics.{ EventCounter, MeasurementHelper, MetricsTag, TimerMetric }
-import forex.domain.oneframe.Constant.{ HEADER, PATH, QUERY_PARAMETER }
-import forex.domain.oneframe.RateDTO
+import forex.domain.oneframe.Constant.{ HEADER, MESSAGE, PATH, QUERY_PARAMETER }
+import forex.domain.oneframe.{ OneFrameError, RateDTO }
 import forex.domain.rates.{ Pair, Rate }
 import forex.services.rates.Algebra
 import forex.services.rates.errors.Error.{ DecodingFailure, OneFrameLookupFailed }
@@ -23,7 +23,9 @@ class OneFrameService[F[_]: Sync](client: Client[F], config: OneFrameConfig)(imp
     extends Algebra[F]
     with AppLogger
     with MeasurementHelper {
-  implicit val rateListEntityDecoder: EntityDecoder[F, List[RateDTO]] = jsonOf[F, List[RateDTO]]
+  implicit val rateListEntityDecoder: EntityDecoder[F, List[RateDTO]]      = jsonOf[F, List[RateDTO]]
+  implicit val oneFrameErrorEntityDecoder: EntityDecoder[F, OneFrameError] = jsonOf[F, OneFrameError]
+
   private val successRateCounter: EventCounter = EventCounter("client.success", "OneFrameService")
   private val timer                            = TimerMetric("client.time", "OneFrameService")
 
@@ -41,35 +43,45 @@ class OneFrameService[F[_]: Sync](client: Client[F], config: OneFrameConfig)(imp
     }
 
   private def getRates(pairs: List[Pair], token: String): F[Error Either List[RateDTO]] = {
+    def errorHandler(errorMessage: String, error: Option[Throwable]): F[Error Either List[RateDTO]] = {
+      successRateCounter.record(Map(MetricsTag.STATUS -> false.toString, MetricsTag.OPERATION -> PATH.RATES))
+      errorMessage match {
+        case MESSAGE.RATE_LIMIT =>
+          logger.log(ErrorLog(s"[One Frame API] Rate limit reached: $errorMessage", error))
+          Sync[F].pure(Left(OneFrameLookupFailed("Rate limited")))
+        case MESSAGE.FAILED_DECODE =>
+          logger.log(ErrorLog(s"[One Frame API] Failed to decode response", error))
+          Sync[F].pure(Left(DecodingFailure("Failed to decode response")))
+        case _ =>
+          logger.log(ErrorLog(s"[One Frame API] Unexpected error: $errorMessage", error))
+          Sync[F].pure(Left(OneFrameLookupFailed("Unexpected Response from One Frame API")): Error Either List[RateDTO])
+      }
+    }
+
     val query: Query = Query.fromPairs(pairs.map(pair => QUERY_PARAMETER.PAIR -> s"${pair.from}${pair.to}"): _*)
     val request      = Request[F](
       method = GET,
       uri = (baseUri / PATH.RATES).copy(query = query),
       headers = Headers(Header.Raw(CIString(HEADER.TOKEN), token))
     )
-
     client.run(request).use { response =>
-      (response.status match {
+      response.status match {
         case Ok =>
-          successRateCounter.record(Map(MetricsTag.STATUS -> true.toString, MetricsTag.OPERATION -> PATH.RATES))
-          response
-            .as[List[RateDTO]]
-            .map(rates => Right(rates): Error Either List[RateDTO])
+          response.as[List[RateDTO]].attempt.flatMap {
+            case Right(rates) =>
+              successRateCounter.record(Map(MetricsTag.STATUS -> true.toString, MetricsTag.OPERATION -> PATH.RATES))
+              Sync[F].pure(Right(rates))
+            case Left(_) =>
+              response.as[OneFrameError].attempt.flatMap {
+                case Right(errorMsg) => errorHandler(errorMsg.error, None)
+                case Left(error)     => errorHandler(MESSAGE.FAILED_DECODE, Some(error))
+              }
+          }
         case _ =>
-          successRateCounter.record(Map(MetricsTag.STATUS -> false.toString, MetricsTag.OPERATION -> PATH.RATES))
-          response
-            .as[String]
-            .map { errorMsg =>
-              logger.log(ErrorLog(s"[One Frame API] $errorMsg", None))
-              Left(OneFrameLookupFailed(errorMsg)): Error Either List[RateDTO]
-            }
-      }).handleErrorWith { error =>
-        val errorMsg = error match {
-          case _: DecodeFailure => s"Failed to decode response"
-          case _                => s"Unexpected error"
-        }
-        logger.log(ErrorLog(errorMsg, Some(error)))
-        Sync[F].pure(Left(DecodingFailure(errorMsg)))
+          response.as[String].attempt.flatMap {
+            case Right(errorMsg) => errorHandler(errorMsg, None)
+            case Left(error)     => errorHandler(MESSAGE.FAILED_DECODE, Some(error))
+          }
       }
     }
   }
