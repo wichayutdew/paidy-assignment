@@ -21,7 +21,7 @@ services:
         -XX:+UseContainerSupport
         -Dconfig.file=/app/conf/integration-test.conf
         -Dlogback.configurationFile=/app/conf/logback.xml
-      OTEL_SDK_DISABLED: true
+        -Dotel.sdk.disabled=true
     networks:
       - app-network
     volumes:
