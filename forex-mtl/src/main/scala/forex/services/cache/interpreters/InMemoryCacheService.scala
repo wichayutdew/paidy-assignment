@@ -1,27 +1,26 @@
 package forex.services.cache.interpreters
 import cats.Applicative
-import forex.domain.core.measurement.logging.{ AppLogger, ErrorLog, WarnLog }
+import forex.domain.core.measurement.logging.{ AppLogger, DebugLog }
+import forex.http.metrics.{ EventCounter, MetricsTag }
 import forex.services.cache.Algebra
+import io.opentelemetry.api.metrics.Meter
 
 import java.time.Instant
 import scala.collection.concurrent.TrieMap
 import scala.concurrent.duration.FiniteDuration
-import scala.util.Try
 
-class InMemoryCacheService[F[_]: Applicative] extends Algebra[F] with AppLogger {
+class InMemoryCacheService[F[_]: Applicative](implicit meter: Meter) extends Algebra[F] with AppLogger {
   private case class CacheEntry(value: String, expiresAt: Instant)
   private val store = TrieMap.empty[String, CacheEntry]
 
+  private val hitRateCounter: EventCounter = EventCounter("client.cache", "InMemoryCacheService")
+
   override def set(key: String, value: String, ttl: FiniteDuration): Unit = {
     val expiresAt = Instant.now().plusMillis(ttl.toMillis)
-    Try(store.put(key, CacheEntry(value, expiresAt))).toEither match {
-      case Right(Some(_)) =>
-      case Right(None)    =>
-        // TODO: add metric to measure cache put fail rate
-        logger.log(WarnLog(message = s"[In-Mem]Cache with key :$key put failed"))
-      case Left(error) =>
-        // TODO: add metric to measure cache put fail with error
-        logger.log(ErrorLog(message = s"[In-Mem]Cache with key :$key put failed", cause = Some(error)))
+    store.put(key, CacheEntry(value, expiresAt)) match {
+      case Some(oldCache) =>
+        logger.log(DebugLog(message = s"[In-Mem]Cache with key :$key exists, replacing old value: ${oldCache.value}"))
+      case None =>
     }
   }
 
@@ -29,26 +28,21 @@ class InMemoryCacheService[F[_]: Applicative] extends Algebra[F] with AppLogger 
     val now = Instant.now()
     store.get(key) match {
       case Some(CacheEntry(value, expiresAt)) if expiresAt.isAfter(now) =>
-        // TODO: add metric to measure the cache get hit rate
+        hitRateCounter.record(Map(MetricsTag.STATUS -> true.toString, MetricsTag.OPERATION -> "get"))
         Applicative[F].pure(Some(value))
       case Some(_) =>
-        // TODO: add metric to measure the cache get miss rate
-        logger.log(WarnLog(message = s"[In-Mem]Cache expired for key $key"))
+        hitRateCounter.record(Map(MetricsTag.STATUS -> false.toString, MetricsTag.OPERATION -> "get"))
+        logger.log(DebugLog(message = s"[In-Mem]Cache expired for key $key"))
         store.remove(key)
         Applicative[F].pure(None)
       case None =>
-        // TODO: add metric to measure the cache get miss rate
-        logger.log(WarnLog(message = s"[In-Mem]Cache miss for key: $key"))
+        logger.log(DebugLog(message = s"[In-Mem]No cache entry found for key: $key"))
         Applicative[F].pure(None)
     }
   }
-  override def delete(key: String): Unit = Try(store.remove(key)).toEither match {
-    case Right(Some(_)) =>
-    case Right(None)    =>
-      // TODO: add metric to measure cache delete fail rate
-      logger.log(WarnLog(message = s"[In-Mem]Cache with key :$key delete failed"))
-    case Left(error) =>
-      // TODO: add metric to measure cache delete fail with error
-      logger.log(ErrorLog(message = s"[In-Mem]Cache with key :$key delete failed", cause = Some(error)))
+  override def delete(key: String): Unit = store.remove(key) match {
+    case Some(_) =>
+    case None    =>
+      logger.log(DebugLog(message = s"[In-Mem]No cache entry found for key: $key"))
   }
 }

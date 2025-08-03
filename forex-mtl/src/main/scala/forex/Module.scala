@@ -17,6 +17,9 @@ import forex.services.cache.interpreters.{ InMemoryCacheService, RedisService }
 import io.lettuce.core.api.StatefulRedisConnection
 import io.lettuce.core.api.sync.RedisCommands
 import io.lettuce.core.{ RedisClient, RedisURI }
+import io.opentelemetry.api.metrics.Meter
+import io.opentelemetry.sdk.OpenTelemetrySdk
+import io.opentelemetry.sdk.autoconfigure.AutoConfiguredOpenTelemetrySdk
 import org.http4s._
 import org.http4s.blaze.client.BlazeClientBuilder
 import org.http4s.client.Client
@@ -32,6 +35,10 @@ class Module[F[_]: ConcurrentEffect: Timer](
     secretManagerService: SecretManagerService[F],
     redisService: RedisService[F]
 ) {
+  /* ------------------------------ OBSERVABILITY ------------------------------ */
+  private val openTelemetry: OpenTelemetrySdk = AutoConfiguredOpenTelemetrySdk.initialize().getOpenTelemetrySdk
+  implicit val meter: Meter                   = openTelemetry.getMeter("forex")
+
   /* ------------------------------ SERVICES ------------------------------ */
   // In-Memory Cache
   private val inMemoryCacheService: InMemoryCacheService[F] = CacheServices.inMemory[F]
@@ -42,27 +49,28 @@ class Module[F[_]: ConcurrentEffect: Timer](
   )
 
   /* ------------------------------ PROGRAMS ------------------------------ */
-  val oneFrameTokenProgram: OneFrameTokenProgram[F] =
+  private val oneFrameTokenProgram: OneFrameTokenProgram[F] =
     new OneFrameTokenProgram[F](secretManagerService, inMemoryCacheService, config.cache.token)
-  val oneFrameApiProgram: OneFrameAPIProgram[F] =
+  private val oneFrameApiProgram: OneFrameAPIProgram[F] =
     new OneFrameAPIProgram[F](ratesService, redisService, config.cache.rates)
-  val ratesProgram: RatesProgram[F] =
+  private val ratesProgram: RatesProgram[F] =
     RatesProgram[F](oneFrameTokenProgram, oneFrameApiProgram)
 
-  val cacheProgram: CacheProgram[F] = CacheProgram[F](redisService, inMemoryCacheService)
+  private val cacheProgram: CacheProgram[F] = CacheProgram[F](redisService, inMemoryCacheService)
 
   /* ------------------------------ SERVER ------------------------------ */
   private val ratesHttpRoutes: HttpRoutes[F]       = new RatesHttpRoutes[F](ratesProgram).routes
-  private val healthCheckHttpRoutes: HttpRoutes[F] = new HealthCheckHttpRoutes[F]().routes
+  private val healthCheckHttpRoutes: HttpRoutes[F] = new HealthCheckHttpRoutes[F].routes
   private val cacheHttpRoutes: HttpRoutes[F]       = new CacheHttpRoutes[F](cacheProgram).routes
 
-  type PartialMiddleware = HttpRoutes[F] => HttpRoutes[F]
-  type TotalMiddleware   = HttpApp[F] => HttpApp[F]
+  private type PartialMiddleware = HttpRoutes[F] => HttpRoutes[F]
+  private type TotalMiddleware   = HttpApp[F] => HttpApp[F]
+
   private val routesMiddleware: PartialMiddleware = (http: HttpRoutes[F]) => AutoSlash(http)
   private val appMiddleware: TotalMiddleware      = { http: HttpApp[F] => Timeout(config.server.requestTimeout)(http) }
+  private val allRoutes: HttpRoutes[F]            = ratesHttpRoutes <+> healthCheckHttpRoutes <+> cacheHttpRoutes
 
-  private val allRoutes: HttpRoutes[F] = ratesHttpRoutes <+> healthCheckHttpRoutes <+> cacheHttpRoutes
-  val httpApp: HttpApp[F]              = appMiddleware(routesMiddleware(allRoutes).orNotFound)
+  val httpApp: HttpApp[F] = appMiddleware(routesMiddleware(allRoutes).orNotFound)
 }
 
 object Module {
