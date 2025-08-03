@@ -1,5 +1,4 @@
 import Dependencies.*
-import com.lightbend.sbt.javaagent.JavaAgent
 
 name := "forex"
 version := "1.0.1"
@@ -86,9 +85,7 @@ ThisBuild / coverageExcludedFiles := Seq(
 
 lazy val root = (project in file("."))
   .configs(IntegrationTest)
-  .enablePlugins(JavaAgent)
   .settings(
-    javaAgents += JavaLibraries.openTelemetryJavaAgent,
     inConfig(IntegrationTest)(Defaults.testSettings),
     IntegrationTest / scalaSource := baseDirectory.value / "src" / "testFixture" / "scala",
     IntegrationTest / resourceDirectory := baseDirectory.value / "src" / "testFixture" / "resources",
