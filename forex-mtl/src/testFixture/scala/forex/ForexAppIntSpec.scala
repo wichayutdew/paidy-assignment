@@ -31,7 +31,7 @@ class ForexAppIntSpec extends AnyWordSpec with Matchers with BeforeAndAfterAll w
 
     clientResource = BlazeClientBuilder[IO](ec)
       .withRequestTimeout(30.seconds)
-      .withIdleTimeout(10.seconds)
+      .withIdleTimeout(60.seconds)
       .resource
 
     client = clientResource.allocated.unsafeRunSync()._1
