@@ -7,7 +7,7 @@ import com.typesafe.scalalogging.Logger
 import forex.domain.core.measurement.metrics.MetricsTag
 import forex.services.secretManager.errors._
 import io.opentelemetry.api.common.Attributes
-import io.opentelemetry.api.metrics.{ LongCounter, LongCounterBuilder, Meter }
+import io.opentelemetry.api.metrics.{ DoubleHistogram, DoubleHistogramBuilder, LongCounter, LongCounterBuilder, Meter }
 import org.mockito.Mockito.lenient
 import org.mockito.scalatest.MockitoSugar
 import org.scalatest.concurrent.ScalaFutures
@@ -27,7 +27,6 @@ class VaultServiceSpec extends AnyWordSpec with Matchers with MockitoSugar with 
         whenReady(vaultService.get("path", "key").unsafeToFuture()) { response =>
           response shouldBe Right("valid-token")
 
-
           verify(counterMocked).add(
             1L,
             Attributes
@@ -38,6 +37,7 @@ class VaultServiceSpec extends AnyWordSpec with Matchers with MockitoSugar with 
               .build()
           )
           verifyZeroInteractions(loggerMock)
+          verify(histogramMocked).record(any[Double], any[Attributes])
         }
       }
       "return an error when the key is invalid" in new Fixture {
@@ -57,6 +57,7 @@ class VaultServiceSpec extends AnyWordSpec with Matchers with MockitoSugar with 
               .build()
           )
           verify(loggerMock).warn(any[String])
+          verify(histogramMocked).record(any[Double], any[Attributes])
         }
       }
 
@@ -76,6 +77,7 @@ class VaultServiceSpec extends AnyWordSpec with Matchers with MockitoSugar with 
               .build()
           )
           verify(loggerMock).error(any[String], any[Throwable])
+          verify(histogramMocked).record(any[Double], any[Attributes])
         }
       }
     }
@@ -88,6 +90,13 @@ class VaultServiceSpec extends AnyWordSpec with Matchers with MockitoSugar with 
     when(longCounterBuilderMocked.setDescription(any[String])).thenReturn(longCounterBuilderMocked)
     val counterMocked: LongCounter = mock[LongCounter]
     when(longCounterBuilderMocked.build()).thenReturn(counterMocked)
+
+    private val doubleHistogramBuilderMocked: DoubleHistogramBuilder = mock[DoubleHistogramBuilder]
+    when(meterMocked.histogramBuilder(any[String])).thenReturn(doubleHistogramBuilderMocked)
+    when(doubleHistogramBuilderMocked.setDescription(any[String])).thenReturn(doubleHistogramBuilderMocked)
+    when(doubleHistogramBuilderMocked.setUnit(any[String])).thenReturn(doubleHistogramBuilderMocked)
+    val histogramMocked: DoubleHistogram = mock[DoubleHistogram]
+    when(doubleHistogramBuilderMocked.build()).thenReturn(histogramMocked)
 
     val vaultClientMocked: Vault               = mock[Vault]
     val logicalMocked: Logical                 = mock[Logical]

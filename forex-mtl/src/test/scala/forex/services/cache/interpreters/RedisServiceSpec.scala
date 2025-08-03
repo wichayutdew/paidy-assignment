@@ -5,7 +5,7 @@ import forex.domain.core.measurement.metrics.MetricsTag
 import io.lettuce.core.SetArgs
 import io.lettuce.core.api.sync.RedisCommands
 import io.opentelemetry.api.common.Attributes
-import io.opentelemetry.api.metrics.{ LongCounter, LongCounterBuilder, Meter }
+import io.opentelemetry.api.metrics.{ DoubleHistogram, DoubleHistogramBuilder, LongCounter, LongCounterBuilder, Meter }
 import org.mockito.Mockito.{ lenient, verifyNoInteractions }
 import org.mockito.scalatest.MockitoSugar
 import org.scalatest.concurrent.ScalaFutures
@@ -34,6 +34,7 @@ class RedisServiceSpec extends AnyWordSpec with Matchers with MockitoSugar with 
             .build()
         )
         verifyNoInteractions(loggerMock)
+        verifyZeroInteractions(histogramMocked)
       }
 
       "log warn when set unsuccessfully" in new Fixture {
@@ -52,6 +53,7 @@ class RedisServiceSpec extends AnyWordSpec with Matchers with MockitoSugar with 
         )
         verify(redisClientMocked).set(any[String], any[String], any[SetArgs])
         verify(loggerMock).warn(any[String])
+        verifyZeroInteractions(histogramMocked)
       }
 
       "log error when set error" in new Fixture {
@@ -70,6 +72,7 @@ class RedisServiceSpec extends AnyWordSpec with Matchers with MockitoSugar with 
         )
         verify(redisClientMocked).set(any[String], any[String], any[SetArgs])
         verify(loggerMock).error(any[String], any[Throwable])
+        verifyZeroInteractions(histogramMocked)
       }
     }
 
@@ -91,6 +94,7 @@ class RedisServiceSpec extends AnyWordSpec with Matchers with MockitoSugar with 
               .build()
           )
           verifyNoInteractions(loggerMock)
+          verify(histogramMocked).record(any[Double], any[Attributes])
         }
       }
 
@@ -120,6 +124,7 @@ class RedisServiceSpec extends AnyWordSpec with Matchers with MockitoSugar with 
               .build()
           )
           verify(loggerMock).debug(any[String])
+          verify(histogramMocked).record(any[Double], any[Attributes])
         }
       }
 
@@ -140,6 +145,7 @@ class RedisServiceSpec extends AnyWordSpec with Matchers with MockitoSugar with 
               .build()
           )
           verify(loggerMock).error(any[String], any[Throwable])
+          verify(histogramMocked).record(any[Double], any[Attributes])
         }
       }
     }
@@ -161,6 +167,7 @@ class RedisServiceSpec extends AnyWordSpec with Matchers with MockitoSugar with 
         )
         verify(redisClientMocked).del(any[String])
         verifyZeroInteractions(loggerMock)
+        verifyZeroInteractions(histogramMocked)
       }
 
       "log debug when delete non existed key" in new Fixture {
@@ -179,6 +186,7 @@ class RedisServiceSpec extends AnyWordSpec with Matchers with MockitoSugar with 
         )
         verify(redisClientMocked).del(any[String])
         verify(loggerMock).debug(any[String])
+        verifyZeroInteractions(histogramMocked)
       }
 
       "log error when delete error" in new Fixture {
@@ -197,6 +205,7 @@ class RedisServiceSpec extends AnyWordSpec with Matchers with MockitoSugar with 
         )
         verify(redisClientMocked).del(any[String])
         verify(loggerMock).error(any[String], any[Throwable])
+        verifyZeroInteractions(histogramMocked)
       }
     }
   }
@@ -208,6 +217,13 @@ class RedisServiceSpec extends AnyWordSpec with Matchers with MockitoSugar with 
     when(longCounterBuilderMocked.setDescription(any[String])).thenReturn(longCounterBuilderMocked)
     val counterMocked: LongCounter = mock[LongCounter]
     when(longCounterBuilderMocked.build()).thenReturn(counterMocked)
+
+    private val doubleHistogramBuilderMocked: DoubleHistogramBuilder = mock[DoubleHistogramBuilder]
+    when(meterMocked.histogramBuilder(any[String])).thenReturn(doubleHistogramBuilderMocked)
+    when(doubleHistogramBuilderMocked.setDescription(any[String])).thenReturn(doubleHistogramBuilderMocked)
+    when(doubleHistogramBuilderMocked.setUnit(any[String])).thenReturn(doubleHistogramBuilderMocked)
+    val histogramMocked: DoubleHistogram = mock[DoubleHistogram]
+    when(doubleHistogramBuilderMocked.build()).thenReturn(histogramMocked)
 
     val loggerMock: Slf4jLogger = mock[Slf4jLogger]
 

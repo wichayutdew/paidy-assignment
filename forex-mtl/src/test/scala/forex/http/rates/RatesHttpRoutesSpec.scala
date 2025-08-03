@@ -7,7 +7,7 @@ import forex.programs.RatesProgram
 import forex.programs.rates.Protocol
 import forex.programs.rates.errors.{ Error => ProgramError }
 import io.opentelemetry.api.common.Attributes
-import io.opentelemetry.api.metrics.{ LongCounter, LongCounterBuilder, Meter }
+import io.opentelemetry.api.metrics.{ DoubleHistogram, DoubleHistogramBuilder, LongCounter, LongCounterBuilder, Meter }
 import org.http4s.Method.GET
 import org.http4s.Status.{ BadGateway, BadRequest, NotFound, Ok, UnprocessableEntity }
 import org.http4s.implicits.http4sLiteralsSyntax
@@ -44,6 +44,7 @@ class RatesHttpRoutesSpec extends AnyWordSpec with Matchers with MockitoSugar wi
               .put(MetricsTag.CLIENT, "RatesHttpRoutes")
               .build()
           )
+          verify(histogramMocked).record(any[Double], any[Attributes])
 
           val bodyIO: IO[String] = response.as[String]
           whenReady(bodyIO.unsafeToFuture()) { body =>
@@ -70,6 +71,7 @@ class RatesHttpRoutesSpec extends AnyWordSpec with Matchers with MockitoSugar wi
               .put(MetricsTag.CLIENT, "RatesHttpRoutes")
               .build()
           )
+          verify(histogramMocked).record(any[Double], any[Attributes])
 
           val bodyIO: IO[String] = response.as[String]
           whenReady(bodyIO.unsafeToFuture()) { body =>
@@ -100,6 +102,7 @@ class RatesHttpRoutesSpec extends AnyWordSpec with Matchers with MockitoSugar wi
               .put(MetricsTag.CLIENT, "RatesHttpRoutes")
               .build()
           )
+          verify(histogramMocked).record(any[Double], any[Attributes])
 
           val bodyIO: IO[String] = response.as[String]
           whenReady(bodyIO.unsafeToFuture()) { body =>
@@ -130,6 +133,7 @@ class RatesHttpRoutesSpec extends AnyWordSpec with Matchers with MockitoSugar wi
               .put(MetricsTag.CLIENT, "RatesHttpRoutes")
               .build()
           )
+          verify(histogramMocked).record(any[Double], any[Attributes])
 
           val bodyIO: IO[String] = response.as[String]
           whenReady(bodyIO.unsafeToFuture()) { body =>
@@ -160,6 +164,7 @@ class RatesHttpRoutesSpec extends AnyWordSpec with Matchers with MockitoSugar wi
               .put(MetricsTag.CLIENT, "RatesHttpRoutes")
               .build()
           )
+          verify(histogramMocked).record(any[Double], any[Attributes])
 
           val bodyIO: IO[String] = response.as[String]
           whenReady(bodyIO.unsafeToFuture()) { body =>
@@ -179,6 +184,13 @@ class RatesHttpRoutesSpec extends AnyWordSpec with Matchers with MockitoSugar wi
     when(longCounterBuilderMocked.setDescription(any[String])).thenReturn(longCounterBuilderMocked)
     val counterMocked: LongCounter = mock[LongCounter]
     when(longCounterBuilderMocked.build()).thenReturn(counterMocked)
+
+    private val doubleHistogramBuilderMocked: DoubleHistogramBuilder = mock[DoubleHistogramBuilder]
+    when(meterMocked.histogramBuilder(any[String])).thenReturn(doubleHistogramBuilderMocked)
+    when(doubleHistogramBuilderMocked.setDescription(any[String])).thenReturn(doubleHistogramBuilderMocked)
+    when(doubleHistogramBuilderMocked.setUnit(any[String])).thenReturn(doubleHistogramBuilderMocked)
+    val histogramMocked: DoubleHistogram = mock[DoubleHistogram]
+    when(doubleHistogramBuilderMocked.build()).thenReturn(histogramMocked)
 
     val ratesProgramMock: RatesProgram[IO] = mock[RatesProgram[IO]]
 

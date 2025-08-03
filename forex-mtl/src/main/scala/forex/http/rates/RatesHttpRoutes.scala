@@ -8,7 +8,7 @@ import cats.syntax.flatMap._
 import forex.domain.core.BaseError
 import forex.domain.core.Constant.{ PATH, QUERY_PARAMETER }
 import forex.domain.core.measurement.logging.{ AppLogger, ErrorLog }
-import forex.domain.core.measurement.metrics.{ EventCounter, MetricsTag }
+import forex.domain.core.measurement.metrics.{ EventCounter, MeasurementHelper, MetricsTag, TimerMetric }
 import forex.domain.rates.Currency
 import forex.programs.RatesProgram
 import forex.programs.rates.errors.{ Error => ProgramError }
@@ -18,36 +18,42 @@ import org.http4s.dsl.Http4sDsl
 import org.http4s.server.Router
 import org.http4s.{ HttpRoutes, ParseFailure, Response }
 
-class RatesHttpRoutes[F[_]: Sync](rates: RatesProgram[F])(implicit meter: Meter) extends Http4sDsl[F] with AppLogger {
+class RatesHttpRoutes[F[_]: Sync](rates: RatesProgram[F])(implicit meter: Meter)
+    extends Http4sDsl[F]
+    with AppLogger
+    with MeasurementHelper {
 
   import Converters._
   import Protocol._
   import QueryParams._
 
   private val successRateCounter: EventCounter = EventCounter("server.success", "RatesHttpRoutes")
+  private val timer                            = TimerMetric("server.time", "RatesHttpRoutes")
 
   private val httpRoutes: HttpRoutes[F] = HttpRoutes.of[F] {
     case GET -> Root :? FromQueryParam(fromValidated) +& ToQueryParam(toValidated) =>
-      (fromValidated, toValidated) match {
-        case (Valid(from), Valid(to)) =>
-          rates.get(RatesProgramProtocol.GetRatesRequest(from, to)).flatMap {
-            case Right(rate) =>
-              successRateCounter.record(Map(MetricsTag.STATUS -> true.toString, MetricsTag.OPERATION -> PATH.RATES))
-              Ok(rate.asGetApiResponse)
-            case Left(error) =>
-              successRateCounter.record(Map(MetricsTag.STATUS -> false.toString, MetricsTag.OPERATION -> PATH.RATES))
-              toHttpError(error)
-          }
-        case (fromValidated, toValidated) =>
-          successRateCounter.record(Map(MetricsTag.STATUS -> false.toString, MetricsTag.OPERATION -> PATH.RATES))
-          logger.log(ErrorLog("Invalid query parameters", None))
-          BadRequest(
-            List(
-              buildErrorMessage(QUERY_PARAMETER.FROM, fromValidated),
-              buildErrorMessage(QUERY_PARAMETER.TO, toValidated)
-            ).flatten
-              .mkString(";\n")
-          )
+      measure(timer, Map(MetricsTag.OPERATION -> PATH.RATES)) {
+        (fromValidated, toValidated) match {
+          case (Valid(from), Valid(to)) =>
+            rates.get(RatesProgramProtocol.GetRatesRequest(from, to)).flatMap {
+              case Right(rate) =>
+                successRateCounter.record(Map(MetricsTag.STATUS -> true.toString, MetricsTag.OPERATION -> PATH.RATES))
+                Ok(rate.asGetApiResponse)
+              case Left(error) =>
+                successRateCounter.record(Map(MetricsTag.STATUS -> false.toString, MetricsTag.OPERATION -> PATH.RATES))
+                toHttpError(error)
+            }
+          case (fromValidated, toValidated) =>
+            successRateCounter.record(Map(MetricsTag.STATUS -> false.toString, MetricsTag.OPERATION -> PATH.RATES))
+            logger.log(ErrorLog("Invalid query parameters", None))
+            BadRequest(
+              List(
+                buildErrorMessage(QUERY_PARAMETER.FROM, fromValidated),
+                buildErrorMessage(QUERY_PARAMETER.TO, toValidated)
+              ).flatten
+                .mkString(";\n")
+            )
+        }
       }
   }
 

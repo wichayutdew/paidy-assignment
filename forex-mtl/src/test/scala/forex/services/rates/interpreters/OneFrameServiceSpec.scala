@@ -6,7 +6,7 @@ import forex.domain.rates.Rate
 import forex.helper.MockedObject
 import forex.services.rates.errors.Error.{ DecodingFailure, OneFrameLookupFailed }
 import io.opentelemetry.api.common.Attributes
-import io.opentelemetry.api.metrics.{ LongCounter, LongCounterBuilder, Meter }
+import io.opentelemetry.api.metrics.{ DoubleHistogram, DoubleHistogramBuilder, LongCounter, LongCounterBuilder, Meter }
 import org.http4s.client.Client
 import org.http4s.{ Request, Response, Status }
 import org.mockito.Mockito.lenient
@@ -39,6 +39,7 @@ class OneFrameServiceSpec extends AnyWordSpec with Matchers with MockitoSugar wi
               .put(MetricsTag.CLIENT, "OneFrameService")
               .build()
           )
+          verify(histogramMocked).record(any[Double], any[Attributes])
           verifyZeroInteractions(loggerMock)
         }
       }
@@ -60,6 +61,7 @@ class OneFrameServiceSpec extends AnyWordSpec with Matchers with MockitoSugar wi
               .put(MetricsTag.CLIENT, "OneFrameService")
               .build()
           )
+          verify(histogramMocked).record(any[Double], any[Attributes])
           verify(loggerMock).error(any[String])
         }
       }
@@ -82,6 +84,7 @@ class OneFrameServiceSpec extends AnyWordSpec with Matchers with MockitoSugar wi
               .put(MetricsTag.CLIENT, "OneFrameService")
               .build()
           )
+          verify(histogramMocked).record(any[Double], any[Attributes])
           verify(loggerMock).error(any[String], any[Throwable])
         }
       }
@@ -95,6 +98,13 @@ class OneFrameServiceSpec extends AnyWordSpec with Matchers with MockitoSugar wi
     when(longCounterBuilderMocked.setDescription(any[String])).thenReturn(longCounterBuilderMocked)
     val counterMocked: LongCounter = mock[LongCounter]
     when(longCounterBuilderMocked.build()).thenReturn(counterMocked)
+
+    private val doubleHistogramBuilderMocked: DoubleHistogramBuilder = mock[DoubleHistogramBuilder]
+    when(meterMocked.histogramBuilder(any[String])).thenReturn(doubleHistogramBuilderMocked)
+    when(doubleHistogramBuilderMocked.setDescription(any[String])).thenReturn(doubleHistogramBuilderMocked)
+    when(doubleHistogramBuilderMocked.setUnit(any[String])).thenReturn(doubleHistogramBuilderMocked)
+    val histogramMocked: DoubleHistogram = mock[DoubleHistogram]
+    when(doubleHistogramBuilderMocked.build()).thenReturn(histogramMocked)
 
     val mockedClient: Client[IO] = mock[Client[IO]]
 
