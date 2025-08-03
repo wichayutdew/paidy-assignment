@@ -21,6 +21,7 @@ services:
         -XX:+UseContainerSupport
         -Dconfig.file=/app/conf/integration-test.conf
         -Dlogback.configurationFile=/app/conf/logback.xml
+        -Dotel.sdk.disabled=true
     networks:
       - app-network
     volumes:

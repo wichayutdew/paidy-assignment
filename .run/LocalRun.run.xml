@@ -5,6 +5,7 @@
     </envs>
     <option name="MAIN_CLASS_NAME" value="forex.Main" />
     <module name="forex" />
+    <option name="VM_PARAMETERS" value="-Dotel.metrics.exporter=prometheus -Dotel.service.name=forex-mtl -Dotel.exporter.prometheus.port=9465 -Dotel.exporter.prometheus.host=0.0.0.0 -Dotel.traces.exporter=none -Dotel.logs.exporter=none -Dotel.exporter.otlp.endpoint=" />
     <extension name="coverage">
       <pattern>
         <option name="PATTERN" value="forex.*" />

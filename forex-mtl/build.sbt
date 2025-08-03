@@ -1,4 +1,4 @@
-import Dependencies._
+import Dependencies.*
 
 name := "forex"
 version := "1.0.1"
@@ -63,7 +63,11 @@ libraryDependencies ++= Seq(
   Libraries.circeGenericExt,
   Libraries.circeParser,
   Libraries.pureConfig,
-  Libraries.logback,
+  JavaLibraries.logback,
+  Libraries.scalaLogging,
+  JavaLibraries.openTelemetryApi,
+  JavaLibraries.openTelemetrySdkAutoConfigure,
+  JavaLibraries.openTelemetryExporterPrometheus,
   Libraries.enumeratum,
   JavaLibraries.vault,
   JavaLibraries.redis,
@@ -79,7 +83,7 @@ ThisBuild / coverageExcludedFiles := Seq(
   ".*Module.*"
 ).mkString("|")
 
-lazy val root            = (project in file("."))
+lazy val root = (project in file("."))
   .configs(IntegrationTest)
   .settings(
     inConfig(IntegrationTest)(Defaults.testSettings),

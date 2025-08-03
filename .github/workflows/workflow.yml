@@ -53,8 +53,14 @@ jobs:
           docker compose -f integration-test.yml up -d
       - name: Check service health
         run: |
-          cd forex-mtl
-          docker compose -f integration-test.yml ps
+          for i in {1..30}; do
+            if curl -s http://localhost:8090/health; then
+              exit 0
+            fi
+            sleep 2
+          done
+          echo "App did not start in time"
+          exit 1
       - name: Run integration tests
         run: |
           cd forex-mtl

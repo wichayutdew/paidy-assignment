@@ -1,0 +1,9 @@
+scrape_configs:
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: [ 'localhost:9090' ]
+  - job_name: 'forex-mtl'
+    static_configs:
+      - targets: [ 'host.docker.internal:9465' ] ## To allow docker network to hit local machine network
+    scrape_interval: 10s
+    metrics_path: /metrics
