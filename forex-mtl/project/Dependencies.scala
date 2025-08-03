@@ -1,4 +1,4 @@
-import sbt._
+import sbt.*
 
 object Dependencies {
 
@@ -16,6 +16,7 @@ object Dependencies {
     val kindProjector    = "0.13.2"
     val logback          = "1.2.3"
     val scalaLogging     = "3.9.4"
+    val openTelemetry    = "1.24.0"
     val scalaCheck       = "1.15.3"
     val scalaTest        = "3.2.7"
     val catsScalaCheck   = "0.3.2"
@@ -45,8 +46,7 @@ object Dependencies {
     lazy val kindProjector = "org.typelevel" %% "kind-projector" % Versions.kindProjector cross CrossVersion.full
 
     // Runtime
-    lazy val scalaLogging = "com.typesafe.scala-logging" %% "scala-logging"   % Versions.scalaLogging
-    lazy val logback      = "ch.qos.logback"              % "logback-classic" % Versions.logback
+    lazy val scalaLogging = "com.typesafe.scala-logging" %% "scala-logging" % Versions.scalaLogging
 
     // Test
     lazy val scalaTest        = "org.scalatest"     %% "scalatest"               % Versions.scalaTest
@@ -56,8 +56,18 @@ object Dependencies {
   }
 
   object JavaLibraries {
-    lazy val vault = "com.bettercloud" % "vault-java-driver" % Versions.vault
-    lazy val redis = "io.lettuce"      % "lettuce-core"      % Versions.redis
+    def openTelemetry(artifact: String, isAlphaVersion: Boolean = false): ModuleID =
+      "io.opentelemetry" % artifact % (Versions.openTelemetry + (if (isAlphaVersion) "-alpha" else ""))
+
+    lazy val openTelemetryApi              = openTelemetry("opentelemetry-api")
+    lazy val openTelemetrySdkAutoConfigure =
+      openTelemetry("opentelemetry-sdk-extension-autoconfigure", isAlphaVersion = true)
+    lazy val openTelemetryExporterPrometheus = openTelemetry("opentelemetry-exporter-prometheus", isAlphaVersion = true)
+    lazy val openTelemetryJavaAgent          =
+      "io.opentelemetry.javaagent" % "opentelemetry-javaagent" % Versions.openTelemetry % "runtime"
+    lazy val logback = "ch.qos.logback"  % "logback-classic"   % Versions.logback
+    lazy val vault   = "com.bettercloud" % "vault-java-driver" % Versions.vault
+    lazy val redis   = "io.lettuce"      % "lettuce-core"      % Versions.redis
   }
 
 }
