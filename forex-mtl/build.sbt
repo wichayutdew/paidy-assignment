@@ -88,17 +88,7 @@ lazy val root = (project in file("."))
   .configs(IntegrationTest)
   .enablePlugins(JavaAgent)
   .settings(
-    Compile / run / javaAgents += JavaLibraries.openTelemetryJavaAgent,
-    Compile / run / javaOptions ++= Seq(
-      "-Dotel.java.global-autoconfigure.enabled=true",
-      "-Dotel.service.name=forex-mtl",
-      "-Dotel.metrics.exporter=prometheus",
-      "-Dotel.exporter.prometheus.port=9464",
-      "-Dotel.exporter.prometheus.host=0.0.0.0",
-      "-Dotel.traces.exporter=none", // disable auto configure
-      "-Dotel.logs.exporter=none", // disable auto configure
-      "-Dotel.exporter.otlp.endpoint=" // disable auto configure
-    ),
+    javaAgents += JavaLibraries.openTelemetryJavaAgent,
     inConfig(IntegrationTest)(Defaults.testSettings),
     IntegrationTest / scalaSource := baseDirectory.value / "src" / "testFixture" / "scala",
     IntegrationTest / resourceDirectory := baseDirectory.value / "src" / "testFixture" / "resources",
