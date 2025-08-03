@@ -232,10 +232,9 @@ message and the PR title will follow Semantic convention.
    internal cloud network.
    So, only authorized user within the company can actually hit the endpoint, and there's no impact when the endpoint is
    called accidentally other than the cache is evicted.
-
-### Idea
-
-- handle oneframe API ratelimit error
+4. Handle One Frame API rate limit `Ok:{"error": "Quota reached"}`
+   > Even thought the ratelimit error should usually respond with 429:TooManyRequests message but One Frame API decided
+   to respond with 200:Ok and error message in the body.
 
 ### Rejected Idea(s)
 
