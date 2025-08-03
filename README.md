@@ -186,9 +186,31 @@ message and the PR title will follow Semantic convention.
    > But anyway we cannot really do fool-proofing against the first scenario, so we will just have to monitor the
    service and fix it when it happens.
 
-## Send a server metric to Prometheus
+## [Send a server metric to Prometheus] (https://github.com/wichayutdew/paidy-assignment/pull/13)
 
 > To have a monitoring system to monitor the service's non-functional requirements
+
+- All the logs implemented will all be actionable, in a way that if the service is not working as expected, we
+  can see it in the logs and take action to fix it.
+- Metrics will be categorized into 3 categories
+    - number of calls for both successful and failed requests
+        - To verify the non-functional requirements of 10,000 successful requests per day.
+        - Can be extended to build Success rate metric
+    - cache hit/miss rate
+        - To monitor if the cache is working as expected, and also to monitor the
+          cache hit/miss rate so we can adjust the cache TTL accordingly.
+    - Method's execution time
+        - To monitor the performance of the service. can be extended to build latency metric
+- All this metrics will also be useful for alert set up along with canary deployment to ensure the service
+  is healthy and all the bad packages don't get deployed to production.
+
+### Caveat
+
+1. Will not implement log,metrics appender and tracing
+
+- This will be beneficial for production service, in order to monitor service's health and performance and trying to
+  find the hotspot where CPU and Memory not properly utilized. Since we will not deploy the service and the service is
+  rather small there's no need to implement it from the stated scope.
 
 ## [Extras] Load test
 
@@ -213,10 +235,17 @@ message and the PR title will follow Semantic convention.
 
 ### Idea
 
-- make generic HTTP client and Server Route
 - handle oneframe API ratelimit error
 
 ### Rejected Idea(s)
 
 1. convert All Errors to SingleGenericServerError so we don't need to handle error transformation in every service
    > against the functional programming paradigm, decided to not implement it
+2. make generic HTTP client and Server Route
+   > will not implement since the usage is still focused solely on 1 endpoint with 1 use case of client
+   > usually generalization will be useful when we have 2 or more services/clients that working somewhat similar
+   > So we try to generalize the logic to be reusable.
+3. Swagger documentation
+   > Decided not to implement as part of this exercise, due to time constraint, reckon, it'll take too long compared to
+   the benefit it gives since the service is rather small, if it's really a production use case and the service is
+   utilized internally within the company, documenting the API spec in some wiki page should be sufficient.
