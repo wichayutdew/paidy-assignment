@@ -23,30 +23,6 @@ message and the PR title will follow Semantic convention.
 
 # Overview
 
-1. As the requirement is vague, I'll list my assumptions in each task to clarify the scope of the task.
-2. Since I don't want to over-complicated the task, I will not try to deploy this code to any cloud provider but rather
-   make sure local development and testing is as smooth as possible.
-    - Means, all the external dependencies will be deployed locally under single docker-compose file. All the steps to
-      start the services will be documented in the `README.md` file.
-
-# Service Feature overview
-
-* If you would like to try it out, please check out how to run the service in [FOREX_MTL_README.md](forex-mtl/README.md)
-* All the available endpoints can be found in postman collections/envirnoments [postman](forex-mtl/postman)
-
-| Feature                     | Description                                                                | Screenshot                                                                                                                                                                                                               |
-|-----------------------------|----------------------------------------------------------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| Health Check                | Able to check service health                                               | ![health_check.png](forex-mtl/screenshot/health_check.png)                                                                                                                                                               |
-| Fetch Exchange Rate         | Able to fetch exchange rate from One Frame API                             | ![success_response.png](forex-mtl/screenshot/success_response.png)                                                                                                                                                       |
-| Error Handling              | Response appropriate error when request query is invalid                   | ![invalid_request.png](forex-mtl/screenshot/invalid_request.png)                                                                                                                                                         |
-| Error Handling              | Response appropriate error when 3rd party service is not available         | ![one_frame_rate_limit.png](forex-mtl/screenshot/one_frame_rate_limit.png)                                                                                                                                               |
-| Cache                       | Able to delete the cache either in-memory or Redis                         | ![cache_delete.png](forex-mtl/screenshot/cache_delete.png)                                                                                                                                                               |
-| Monitoring                  | Able to monitor the service success rate and latency in Prometheus         | ![metrics.png](forex-mtl/screenshot/metrics.png) ![prometheus.png](forex-mtl/screenshot/prometheus.png) ![error_log.png](forex-mtl/screenshot/error_log.png)                                                             |
-| Secret                      | Able to fetch token from HashiCorp Vault                                   | ![vault.png](forex-mtl/screenshot/vault.png)                                                                                                                                                                             | 
-| Non-Functional Requirements | Able to handle 10,000 successful requests per day with 5 minutes cache TTL | ![load_test_server_metric.png](forex-mtl/screenshot/load_test_server_metric.png) ![load_test_one_frame.png](forex-mtl/screenshot/load_test_one_frame.png) ![server_latency.png](forex-mtl/screenshot/server_latency.png) |
-
-# Tasks Breakdown
-
 > TL;DR, connects to One Frame API to get exchange rate and cache it to Redis with 5 minutes TTL to satisfy
 > non-functional requirement of 10,000 successful request per day with oldest 5 minutes data and stored all the secrets
 > in HashiCorp Vault.
@@ -64,6 +40,31 @@ message and the PR title will follow Semantic convention.
 >
 > Lastly, to keep high availability and performance, the service will be logged and metrices will be sent to Prometheus.
 > We can later, connect data in Prometheus to Grafana to visualize application performance and health.
+
+1. As the requirement is vague, I'll list my assumptions in each task to clarify the scope of the task.
+2. Since I don't want to over-complicated the task, I will not try to deploy this code to any cloud provider but rather
+   make sure local development and testing is as smooth as possible.
+    - Means, all the external dependencies will be deployed locally under single docker-compose file. All the steps to
+      start the services will be documented in the `README.md` file.
+
+# Service Feature overview
+
+* If you would like to try it out, please check out how to run the service in [FOREX_MTL_README.md](forex-mtl/README.md)
+* All the available endpoints can be found in postman collections/envirnoments [postman](forex-mtl/postman)
+
+| Feature                     | Description                                                                              | Screenshot                                                                                                                                                                                                               |
+|-----------------------------|------------------------------------------------------------------------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| Health Check                | Able to check service health                                                             | ![health_check.png](forex-mtl/screenshot/health_check.png)                                                                                                                                                               |
+| Fetch Exchange Rate         | Able to fetch exchange rate from One Frame API                                           | ![success_response.png](forex-mtl/screenshot/success_response.png)                                                                                                                                                       |
+| Error Handling              | Response appropriate error when request query is invalid                                 | ![invalid_request.png](forex-mtl/screenshot/invalid_request.png)                                                                                                                                                         |
+| Error Handling              | Response appropriate error when 3rd party service is not available                       | ![one_frame_rate_limit.png](forex-mtl/screenshot/one_frame_rate_limit.png)                                                                                                                                               |
+| Cache                       | Able to delete the cache either in-memory or Redis                                       | ![cache_delete.png](forex-mtl/screenshot/cache_delete.png)                                                                                                                                                               |
+| Monitoring                  | Able to monitor the service success rate and latency in Prometheus                       | ![metrics.png](forex-mtl/screenshot/metrics.png) ![prometheus.png](forex-mtl/screenshot/prometheus.png) ![error_log.png](forex-mtl/screenshot/error_log.png)                                                             |
+| Secret                      | Able to fetch token from HashiCorp Vault                                                 | ![vault.png](forex-mtl/screenshot/vault.png)                                                                                                                                                                             | 
+| CI/CD                       | Github pipeline run for code style linting, unit test and coverage, integration/e2e test | ![CI.png](forex-mtl/screenshot/CI.png) ![unit_test.png](forex-mtl/screenshot/unit_test.png) ![integration_test.png](forex-mtl/screenshot/integration_test.png)                                                           |
+| Non-Functional Requirements | Able to handle 10,000 successful requests per day with 5 minutes cache TTL               | ![load_test_server_metric.png](forex-mtl/screenshot/load_test_server_metric.png) ![load_test_one_frame.png](forex-mtl/screenshot/load_test_one_frame.png) ![server_latency.png](forex-mtl/screenshot/server_latency.png) |
+
+# Tasks Breakdown
 
 ## [Project Setup](https://github.com/wichayutdew/paidy-assignment/pull/1)
 
