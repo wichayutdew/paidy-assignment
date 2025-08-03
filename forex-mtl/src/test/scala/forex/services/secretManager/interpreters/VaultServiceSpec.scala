@@ -4,7 +4,10 @@ import com.bettercloud.vault.Vault
 import com.bettercloud.vault.api.Logical
 import com.bettercloud.vault.response.LogicalResponse
 import com.typesafe.scalalogging.Logger
+import forex.domain.core.measurement.metrics.MetricsTag
 import forex.services.secretManager.errors._
+import io.opentelemetry.api.common.Attributes
+import io.opentelemetry.api.metrics.{ LongCounter, LongCounterBuilder, Meter }
 import org.mockito.Mockito.lenient
 import org.mockito.scalatest.MockitoSugar
 import org.scalatest.concurrent.ScalaFutures
@@ -23,6 +26,17 @@ class VaultServiceSpec extends AnyWordSpec with Matchers with MockitoSugar with 
 
         whenReady(vaultService.get("path", "key").unsafeToFuture()) { response =>
           response shouldBe Right("valid-token")
+
+
+          verify(counterMocked).add(
+            1L,
+            Attributes
+              .builder()
+              .put(MetricsTag.STATUS, true.toString)
+              .put(MetricsTag.OPERATION, "get")
+              .put(MetricsTag.CLIENT, "VaultService")
+              .build()
+          )
           verifyZeroInteractions(loggerMock)
         }
       }
@@ -32,6 +46,16 @@ class VaultServiceSpec extends AnyWordSpec with Matchers with MockitoSugar with 
 
         whenReady(vaultService.get("path", "key").unsafeToFuture()) { response =>
           response shouldBe Left(Error.SecretLookupFailed("Key 'key' not found at path 'path'"))
+
+          verify(counterMocked).add(
+            1L,
+            Attributes
+              .builder()
+              .put(MetricsTag.STATUS, true.toString)
+              .put(MetricsTag.OPERATION, "get")
+              .put(MetricsTag.CLIENT, "VaultService")
+              .build()
+          )
           verify(loggerMock).warn(any[String])
         }
       }
@@ -41,6 +65,16 @@ class VaultServiceSpec extends AnyWordSpec with Matchers with MockitoSugar with 
 
         whenReady(vaultService.get("path", "key").unsafeToFuture()) { response =>
           response shouldBe Left(Error.SecretLookupFailed("Invalid path"))
+
+          verify(counterMocked).add(
+            1L,
+            Attributes
+              .builder()
+              .put(MetricsTag.STATUS, false.toString)
+              .put(MetricsTag.OPERATION, "get")
+              .put(MetricsTag.CLIENT, "VaultService")
+              .build()
+          )
           verify(loggerMock).error(any[String], any[Throwable])
         }
       }
@@ -48,6 +82,13 @@ class VaultServiceSpec extends AnyWordSpec with Matchers with MockitoSugar with 
   }
 
   trait Fixture {
+    implicit val meterMocked: Meter                          = mock[Meter]
+    private val longCounterBuilderMocked: LongCounterBuilder = mock[LongCounterBuilder]
+    when(meterMocked.counterBuilder(any[String])).thenReturn(longCounterBuilderMocked)
+    when(longCounterBuilderMocked.setDescription(any[String])).thenReturn(longCounterBuilderMocked)
+    val counterMocked: LongCounter = mock[LongCounter]
+    when(longCounterBuilderMocked.build()).thenReturn(counterMocked)
+
     val vaultClientMocked: Vault               = mock[Vault]
     val logicalMocked: Logical                 = mock[Logical]
     val logicalResponseMocked: LogicalResponse = mock[LogicalResponse]

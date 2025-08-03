@@ -4,12 +4,14 @@ import cats.effect.Sync
 import cats.implicits.{ catsSyntaxApplicativeError, toFlatMapOps, toFunctorOps }
 import forex.config.models.OneFrameConfig
 import forex.domain.core.measurement.logging.{ AppLogger, ErrorLog }
+import forex.domain.core.measurement.metrics.{ EventCounter, MetricsTag }
 import forex.domain.oneframe.Constant.{ HEADER, PATH, QUERY_PARAMETER }
 import forex.domain.oneframe.RateDTO
 import forex.domain.rates.{ Pair, Rate }
 import forex.services.rates.Algebra
 import forex.services.rates.errors.Error.{ DecodingFailure, OneFrameLookupFailed }
 import forex.services.rates.errors._
+import io.opentelemetry.api.metrics.Meter
 import org.http4s.Method.GET
 import org.http4s.Status.Ok
 import org.http4s._
@@ -17,8 +19,11 @@ import org.http4s.circe.jsonOf
 import org.http4s.client.Client
 import org.typelevel.ci.CIString
 
-class OneFrameService[F[_]: Sync](client: Client[F], config: OneFrameConfig) extends Algebra[F] with AppLogger {
+class OneFrameService[F[_]: Sync](client: Client[F], config: OneFrameConfig)(implicit meter: Meter)
+    extends Algebra[F]
+    with AppLogger {
   implicit val rateListEntityDecoder: EntityDecoder[F, List[RateDTO]] = jsonOf[F, List[RateDTO]]
+  private val successRateCounter: EventCounter = EventCounter("client.success", "OneFrameService")
 
   private val baseUri = Uri(
     Some(Uri.Scheme.http),
@@ -41,10 +46,12 @@ class OneFrameService[F[_]: Sync](client: Client[F], config: OneFrameConfig) ext
     client.run(request).use { response =>
       (response.status match {
         case Ok =>
+          successRateCounter.record(Map(MetricsTag.STATUS -> true.toString, MetricsTag.OPERATION -> PATH.RATES))
           response
             .as[List[RateDTO]]
             .map(rates => Right(rates): Error Either List[RateDTO])
         case _ =>
+          successRateCounter.record(Map(MetricsTag.STATUS -> false.toString, MetricsTag.OPERATION -> PATH.RATES))
           response
             .as[String]
             .map { errorMsg =>
