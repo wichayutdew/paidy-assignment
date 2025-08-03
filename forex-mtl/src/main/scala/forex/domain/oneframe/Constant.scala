@@ -12,7 +12,7 @@ object Constant {
   }
 
   object MESSAGE {
-    val RATE_LIMIT = "Quota reached"
+    val RATE_LIMIT    = "Quota reached"
     val FAILED_DECODE = "decoding failure"
   }
 }
