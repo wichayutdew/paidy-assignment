@@ -25,9 +25,15 @@
 			"value": "rates_EURUSD",
 			"type": "default",
 			"enabled": true
+		},
+		{
+			"key": "metrics-appender",
+			"value": "http://localhost:9465",
+			"type": "default",
+			"enabled": true
 		}
 	],
 	"_postman_variable_scope": "environment",
-	"_postman_exported_at": "2025-08-02T11:10:03.236Z",
+	"_postman_exported_at": "2025-08-03T16:48:53.080Z",
 	"_postman_exported_using": "Postman/11.56.4"
 }

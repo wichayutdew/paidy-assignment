@@ -19,7 +19,7 @@ import org.slf4j.{ Logger => Slf4jLogger }
 class OneFrameServiceSpec extends AnyWordSpec with Matchers with MockitoSugar with MockedObject with ScalaFutures {
 
   "OneFrameService" when {
-    "get" should {
+    "get and receive Ok response" should {
       "return a rate for a valid pair" in new Fixture {
         val mockResponse: Response[IO] = Response[IO](status = Status.Ok).withEntity(
           """[{"from":"USD","to":"EUR","bid":1.2,"ask":1.3,"price":1.2,"time_stamp":"2099-12-31T23:59:59Z"}]"""
@@ -44,12 +44,35 @@ class OneFrameServiceSpec extends AnyWordSpec with Matchers with MockitoSugar wi
         }
       }
 
-      "return OneFrameLookupFailed if OneFrame returns an error" in new Fixture {
-        val mockResponse: Response[IO] = Response[IO](status = Status.BadGateway).withEntity("Error")
+      "return rate limit error if OneFrame returns rate limit message" in new Fixture {
+        val mockResponse: Response[IO] = Response[IO](status = Status.Ok).withEntity("""{"error":"Quota reached"}""")
         when(mockedClient.run(any[Request[IO]])).thenReturn(Resource.pure[IO, Response[IO]](mockResponse))
 
         whenReady(service.get(List(mockedRate.pair), mockedToken).unsafeToFuture()) { response =>
-          response shouldBe Left(OneFrameLookupFailed("Error"))
+          response shouldBe Left(OneFrameLookupFailed("Rate limited"))
+
+          verify(mockedClient).run(any[Request[IO]])
+          verify(counterMocked).add(
+            1L,
+            Attributes
+              .builder()
+              .put(MetricsTag.STATUS, false.toString)
+              .put(MetricsTag.OPERATION, "rates")
+              .put(MetricsTag.CLIENT, "OneFrameService")
+              .build()
+          )
+          verify(histogramMocked).record(any[Double], any[Attributes])
+          verify(loggerMock).error(any[String])
+        }
+      }
+
+      "return generic error if OneFrame returns error with unknown message" in new Fixture {
+        val mockResponse: Response[IO] =
+          Response[IO](status = Status.Ok).withEntity("""{"error":"some random error"}""")
+        when(mockedClient.run(any[Request[IO]])).thenReturn(Resource.pure[IO, Response[IO]](mockResponse))
+
+        whenReady(service.get(List(mockedRate.pair), mockedToken).unsafeToFuture()) { response =>
+          response shouldBe Left(OneFrameLookupFailed("Unexpected Response from One Frame API"))
 
           verify(mockedClient).run(any[Request[IO]])
           verify(counterMocked).add(
@@ -67,7 +90,7 @@ class OneFrameServiceSpec extends AnyWordSpec with Matchers with MockitoSugar wi
       }
 
       "return DecodingFailure if response cannot be decoded" in new Fixture {
-        val mockResponse: Response[IO] = Response[IO](status = Status.Ok).withEntity("""[{"from":"USD}]""")
+        val mockResponse: Response[IO] = Response[IO](status = Status.Ok).withEntity("""[{"from":"USD"}]""")
         when(mockedClient.run(any[Request[IO]])).thenReturn(Resource.pure[IO, Response[IO]](mockResponse))
 
         whenReady(service.get(List(mockedRate.pair), mockedToken).unsafeToFuture()) { response =>
@@ -79,13 +102,37 @@ class OneFrameServiceSpec extends AnyWordSpec with Matchers with MockitoSugar wi
             1L,
             Attributes
               .builder()
-              .put(MetricsTag.STATUS, true.toString)
+              .put(MetricsTag.STATUS, false.toString)
               .put(MetricsTag.OPERATION, "rates")
               .put(MetricsTag.CLIENT, "OneFrameService")
               .build()
           )
           verify(histogramMocked).record(any[Double], any[Attributes])
           verify(loggerMock).error(any[String], any[Throwable])
+        }
+      }
+    }
+
+    "get and received non-Ok response" should {
+      "return OneFrameLookupFailed if OneFrame returns an error" in new Fixture {
+        val mockResponse: Response[IO] = Response[IO](status = Status.BadGateway).withEntity("Error")
+        when(mockedClient.run(any[Request[IO]])).thenReturn(Resource.pure[IO, Response[IO]](mockResponse))
+
+        whenReady(service.get(List(mockedRate.pair), mockedToken).unsafeToFuture()) { response =>
+          response shouldBe Left(OneFrameLookupFailed("Unexpected Response from One Frame API"))
+
+          verify(mockedClient).run(any[Request[IO]])
+          verify(counterMocked).add(
+            1L,
+            Attributes
+              .builder()
+              .put(MetricsTag.STATUS, false.toString)
+              .put(MetricsTag.OPERATION, "rates")
+              .put(MetricsTag.CLIENT, "OneFrameService")
+              .build()
+          )
+          verify(histogramMocked).record(any[Double], any[Attributes])
+          verify(loggerMock).error(any[String])
         }
       }
     }

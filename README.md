@@ -23,11 +23,46 @@ message and the PR title will follow Semantic convention.
 
 # Overview
 
+> TL;DR, connects to One Frame API to get exchange rate and cache it to Redis with 5 minutes TTL to satisfy
+> non-functional requirement of 10,000 successful request per day with oldest 5 minutes data and stored all the secrets
+> in HashiCorp Vault.
+>
+> When service is first run It'll prefetch all the possible exchange rates and store it in Redis cache. using only 1
+> call to One Frame API.
+>
+> To prevent loading vault service, all the token will be cached in memory for 3 hours, this allow user to easily update
+> the token without needing to restart the service.
+>
+> And to make it production ready, all the changes will be covered by tests in CI/CD pipeline to ensure code quality and
+> format.
+> Tests including unit test to confirm each isolated component, integration/E2E test to ensure feature is running
+> correctly end to end
+>
+> Lastly, to keep high availability and performance, the service will be logged and metrices will be sent to Prometheus.
+> We can later, connect data in Prometheus to Grafana to visualize application performance and health.
+
 1. As the requirement is vague, I'll list my assumptions in each task to clarify the scope of the task.
 2. Since I don't want to over-complicated the task, I will not try to deploy this code to any cloud provider but rather
    make sure local development and testing is as smooth as possible.
     - Means, all the external dependencies will be deployed locally under single docker-compose file. All the steps to
       start the services will be documented in the `README.md` file.
+
+# Service Feature overview
+
+* If you would like to try it out, please check out how to run the service in [FOREX_MTL_README.md](forex-mtl/README.md)
+* All the available endpoints can be found in postman collections/envirnoments [postman](forex-mtl/postman)
+
+| Feature                     | Description                                                                              | Screenshot                                                                                                                                                                                                               |
+|-----------------------------|------------------------------------------------------------------------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| Health Check                | Able to check service health                                                             | ![health_check.png](forex-mtl/screenshot/health_check.png)                                                                                                                                                               |
+| Fetch Exchange Rate         | Able to fetch exchange rate from One Frame API                                           | ![success_response.png](forex-mtl/screenshot/success_response.png)                                                                                                                                                       |
+| Error Handling              | Response appropriate error when request query is invalid                                 | ![invalid_request.png](forex-mtl/screenshot/invalid_request.png)                                                                                                                                                         |
+| Error Handling              | Response appropriate error when 3rd party service is not available                       | ![one_frame_rate_limit.png](forex-mtl/screenshot/one_frame_rate_limit.png)                                                                                                                                               |
+| Cache                       | Able to delete the cache either in-memory or Redis                                       | ![cache_delete.png](forex-mtl/screenshot/cache_delete.png)                                                                                                                                                               |
+| Monitoring                  | Able to monitor the service success rate and latency in Prometheus                       | ![metrics.png](forex-mtl/screenshot/metrics.png) ![prometheus.png](forex-mtl/screenshot/prometheus.png) ![error_log.png](forex-mtl/screenshot/error_log.png)                                                             |
+| Secret                      | Able to fetch token from HashiCorp Vault                                                 | ![vault.png](forex-mtl/screenshot/vault.png)                                                                                                                                                                             | 
+| CI/CD                       | Github pipeline run for code style linting, unit test and coverage, integration/e2e test | ![CI.png](forex-mtl/screenshot/CI.png) ![unit_test.png](forex-mtl/screenshot/unit_test.png) ![integration_test.png](forex-mtl/screenshot/integration_test.png)                                                           |
+| Non-Functional Requirements | Able to handle 10,000 successful requests per day with 5 minutes cache TTL               | ![load_test_server_metric.png](forex-mtl/screenshot/load_test_server_metric.png) ![load_test_one_frame.png](forex-mtl/screenshot/load_test_one_frame.png) ![server_latency.png](forex-mtl/screenshot/server_latency.png) |
 
 # Tasks Breakdown
 
@@ -186,7 +221,7 @@ message and the PR title will follow Semantic convention.
    > But anyway we cannot really do fool-proofing against the first scenario, so we will just have to monitor the
    service and fix it when it happens.
 
-## [Send a server metric to Prometheus] (https://github.com/wichayutdew/paidy-assignment/pull/13)
+## [Send a server metric to Prometheus](https://github.com/wichayutdew/paidy-assignment/pull/13)
 
 > To have a monitoring system to monitor the service's non-functional requirements
 
@@ -214,7 +249,14 @@ message and the PR title will follow Semantic convention.
 
 ## [Extras] Load test
 
-> To ensure the service can handle 10,000 successful requests per day
+> To ensure the service can handle 10,000 successful requests per day, I decided to create new scala test class
+> called [LoadTestSpec](forex-mtl/src/testFixture/scala/forex/LoadTestSpec.scala) which will calls to /rates endpoint
+> 10,000 times with random pair of currencies and random chance for cache to be evicted to replicate real world
+> scenario, otherwise it'll use all the cached data in 1st prefetch during service startup. and OneFrame API will be
+> called only once.
+>
+> As test is just a way for me to ensure that I satisfy the non-functional requirements of 10,000 successful requests
+> per day, I will not implement any run process in SBT but rather run it manually in the IDE.
 
 ## [Optional] Code Refactoring/Cleanup
 
@@ -232,10 +274,9 @@ message and the PR title will follow Semantic convention.
    internal cloud network.
    So, only authorized user within the company can actually hit the endpoint, and there's no impact when the endpoint is
    called accidentally other than the cache is evicted.
-
-### Idea
-
-- handle oneframe API ratelimit error
+4. Handle One Frame API rate limit `Ok:{"error": "Quota reached"}`
+   > Even thought the ratelimit error should usually respond with 429:TooManyRequests message but One Frame API decided
+   to respond with 200:Ok and error message in the body.
 
 ### Rejected Idea(s)
 
