@@ -1,17 +1,17 @@
 package forex.domain.core.measurement.metrics
 
-import forex.domain.core.measurement.logging.{AppLogger, InfoLog}
+import forex.domain.core.measurement.logging.{ AppLogger, DebugLog }
 import io.opentelemetry.api.common.Attributes
-import io.opentelemetry.api.metrics.{LongCounter, Meter}
+import io.opentelemetry.api.metrics.{ LongCounter, Meter }
 
 case class EventCounter(counter: LongCounter, client: String) extends AppLogger {
   def record(metricsTags: Map[String, String] = Map.empty): Unit = {
     val attributes = buildAttributes(metricsTags)
-    logger.log(InfoLog(s"Recording event"))
+    logger.log(DebugLog("Recording event"))
     counter.add(1L, attributes)
   }
 
-  private def buildAttributes(additionalAttributes: Map[String, String]): Attributes = {
+  private[metrics] def buildAttributes(additionalAttributes: Map[String, String]): Attributes = {
     val builder = Attributes
       .builder()
       .put(MetricsTag.CLIENT, client)
