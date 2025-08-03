@@ -7,7 +7,8 @@ import io.opentelemetry.api.metrics.Meter
 
 //$COVERAGE-OFF$
 object Interpreters {
-  def redis[F[_]: Applicative](client: RedisCommands[String, String]) = new RedisService[F](client)
-  def inMemory[F[_]: Applicative](implicit meter: Meter)              = new InMemoryCacheService[F]
+  def redis[F[_]: Applicative](client: RedisCommands[String, String])(implicit meter: Meter) =
+    new RedisService[F](client)
+  def inMemory[F[_]: Applicative](implicit meter: Meter) = new InMemoryCacheService[F]
 }
 //$COVERAGE-ON$

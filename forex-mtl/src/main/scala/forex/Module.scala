@@ -34,11 +34,7 @@ class Module[F[_]: ConcurrentEffect: Timer](
     httpClient: Client[F],
     secretManagerService: SecretManagerService[F],
     redisService: RedisService[F]
-) {
-  /* ------------------------------ OBSERVABILITY ------------------------------ */
-  private val openTelemetry: OpenTelemetrySdk = AutoConfiguredOpenTelemetrySdk.initialize().getOpenTelemetrySdk
-  implicit val meter: Meter                   = openTelemetry.getMeter("forex")
-
+)(implicit meter: Meter) {
   /* ------------------------------ SERVICES ------------------------------ */
   // In-Memory Cache
   private val inMemoryCacheService: InMemoryCacheService[F] = CacheServices.inMemory[F]
@@ -75,6 +71,10 @@ class Module[F[_]: ConcurrentEffect: Timer](
 
 object Module {
   def apply[F[_]: ConcurrentEffect: Timer](config: ApplicationConfig, ec: ExecutionContext): Resource[F, Module[F]] = {
+    /* ------------------------------ OBSERVABILITY ------------------------------ */
+    val openTelemetry: OpenTelemetrySdk = AutoConfiguredOpenTelemetrySdk.initialize().getOpenTelemetrySdk
+    implicit val meter: Meter           = openTelemetry.getMeter("forex")
+
     def createRedisClient(password: String): Resource[F, RedisCommands[String, String]] =
       Resource
         .make(

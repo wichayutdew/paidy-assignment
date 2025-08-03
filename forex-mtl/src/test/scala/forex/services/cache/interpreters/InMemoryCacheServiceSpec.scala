@@ -1,17 +1,17 @@
 package forex.services.cache.interpreters
 import cats.effect.IO
 import com.typesafe.scalalogging.Logger
-import forex.http.metrics.MetricsTag
+import forex.domain.core.measurement.metrics.MetricsTag
 import io.opentelemetry.api.common.Attributes
-import io.opentelemetry.api.metrics.{ LongCounter, LongCounterBuilder, Meter }
+import io.opentelemetry.api.metrics.{LongCounter, LongCounterBuilder, Meter}
 import org.mockito.Mockito.lenient
 import org.mockito.scalatest.MockitoSugar
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
-import org.slf4j.{ Logger => Slf4jLogger }
+import org.slf4j.{Logger => Slf4jLogger}
 
-import scala.concurrent.duration.{ FiniteDuration, SECONDS }
+import scala.concurrent.duration.{FiniteDuration, SECONDS}
 
 class InMemoryCacheServiceSpec extends AnyWordSpec with Matchers with ScalaFutures with MockitoSugar {
   "InMemoryCacheService" when {

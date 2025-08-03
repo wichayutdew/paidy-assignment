@@ -1,7 +1,7 @@
 package forex.services.cache.interpreters
 import cats.Applicative
 import forex.domain.core.measurement.logging.{ AppLogger, DebugLog }
-import forex.http.metrics.{ EventCounter, MetricsTag }
+import forex.domain.core.measurement.metrics.{ EventCounter, MetricsTag }
 import forex.services.cache.Algebra
 import io.opentelemetry.api.metrics.Meter
 

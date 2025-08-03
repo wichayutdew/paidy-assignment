@@ -1,4 +1,4 @@
-package forex.http.metrics
+package forex.domain.core.measurement.metrics
 
 object MetricsTag {
   val STATUS: String    = "status"

@@ -1,7 +1,8 @@
-package forex.http.metrics
-import forex.domain.core.measurement.logging.{ AppLogger, InfoLog }
+package forex.domain.core.measurement.metrics
+
+import forex.domain.core.measurement.logging.{AppLogger, InfoLog}
 import io.opentelemetry.api.common.Attributes
-import io.opentelemetry.api.metrics.{ LongCounter, Meter }
+import io.opentelemetry.api.metrics.{LongCounter, Meter}
 
 case class EventCounter(counter: LongCounter, client: String) extends AppLogger {
   def record(metricsTags: Map[String, String] = Map.empty): Unit = {
