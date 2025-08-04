@@ -23,6 +23,8 @@ message and the PR title will follow Semantic convention.
 
 # Overview
 
+![service_overview.png](forex-mtl/screenshot/service_overview.png)
+
 > TL;DR, connects to One Frame API to get exchange rate and cache it to Redis with 5 minutes TTL to satisfy
 > non-functional requirement of 10,000 successful request per day with oldest 5 minutes data and stored all the secrets
 > in HashiCorp Vault.
