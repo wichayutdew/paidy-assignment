@@ -247,7 +247,7 @@ message and the PR title will follow Semantic convention.
   find the hotspot where CPU and Memory not properly utilized. Since we will not deploy the service and the service is
   rather small there's no need to implement it from the stated scope.
 
-## [Extras] Load test
+## [Load test](https://github.com/wichayutdew/paidy-assignment/pull/14)
 
 > To ensure the service can handle 10,000 successful requests per day, I decided to create new scala test class
 > called [LoadTestSpec](forex-mtl/src/testFixture/scala/forex/LoadTestSpec.scala) which will calls to /rates endpoint
@@ -287,6 +287,8 @@ message and the PR title will follow Semantic convention.
    > usually generalization will be useful when we have 2 or more services/clients that working somewhat similar
    > So we try to generalize the logic to be reusable.
 3. Swagger documentation
-   > Decided not to implement as part of this exercise, due to time constraint, reckon, it'll take too long compared to
+   > Decided not to implement as part of this exercise. Try to research around, the usual library people uses to
+   generate the swagger json and ui is Tapir which requires cats 3.x.x, reckon, it'll take too long compared to
    the benefit it gives since the service is rather small, if it's really a production use case and the service is
-   utilized internally within the company, documenting the API spec in some wiki page should be sufficient.
+   utilized internally within the company, documenting the API spec in some wiki page should be sufficient. But if the
+   service grows, we can consider upgrading to cats 3.x.x and implement it later.

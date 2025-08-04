@@ -1,7 +1,7 @@
 <component name="ProjectRunConfigurationManager">
   <configuration default="false" name="LocalRun" type="Application" factoryName="Application">
     <envs>
-      <env name="VAULT_TOKEN" value="" />
+      <env name="VAULT_TOKEN" value="root" />
     </envs>
     <option name="MAIN_CLASS_NAME" value="forex.Main" />
     <module name="forex" />
